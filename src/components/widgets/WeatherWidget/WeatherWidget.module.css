@@ -59,6 +59,7 @@
   color: var(--accent);
   white-space: pre;
   margin: 0;
+  overflow-y: hidden;
 }
 
 .info {

@@ -117,7 +117,51 @@
   margin-left: 20px;
   color: var(--color-secondary);
   white-space: pre-wrap;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
 }
+
+/* Output type states */
+.info {
+  color: var(--color-secondary);
+}
+
+.success {
+  color: #7ee787; /* green */
+}
+
+.error {
+  color: #ff7b7b; /* red */
+}
+
+.loading {
+  color: #ffd56b; /* yellow */
+}
+
+.commandText {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.spinner {
+  display: inline-block;
+  font-family: var(--font-mono);
+  animation: spin 900ms linear infinite;
+  transform-origin: center;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  50% { transform: rotate(90deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* Typing text color helpers */
+.textInfo { color: var(--color-secondary); }
+.textSuccess { color: #b7f7b2; }
+.textError { color: #ffd4d4; }
+.textLoading { color: #ffefbf; }
 
 .inputForm {
   display: flex;

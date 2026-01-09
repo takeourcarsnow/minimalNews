@@ -5,6 +5,20 @@
 
 .draggable:hover .dragHandle {
   opacity: 1;
+  /* Allow pointer events only when the handle is visible to avoid blocking underlying controls */
+  pointer-events: auto;
+}
+
+/* Prevent the invisible drag handle from intercepting clicks when hidden */
+.dragHandle {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  cursor: grab;
+  z-index: 10;
+  pointer-events: none;
 }
 
 .dragHandle {

@@ -96,6 +96,14 @@ export default function WeatherWidget({ defaultLocation = 'New York' }: WeatherW
   const [locationDetected, setLocationDetected] = useState(false);
   const [detectingLocation, setDetectingLocation] = useState(true);
 
+  // React to prop updates from CLI or other actions so the widget updates immediately
+  useEffect(() => {
+    if (defaultLocation && defaultLocation !== location) {
+      setLocation(defaultLocation);
+      setInputValue(defaultLocation);
+    }
+  }, [defaultLocation]);
+
   // Detect user's location on mount
   useEffect(() => {
     if (!locationDetected && detectingLocation) {

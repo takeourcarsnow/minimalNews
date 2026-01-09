@@ -17,6 +17,7 @@
   margin: 0;
   white-space: pre;
   display: inline-block;
+  overflow-y: hidden;
 }
 
 .logoMobile {
@@ -27,6 +28,7 @@
   color: var(--primary);
   margin: 0;
   white-space: pre;
+  overflow-y: hidden;
 }
 
 .headerContent {

@@ -9,6 +9,16 @@ async function fetchFromRSSFeeds(): Promise<NewsItem[]> {
     'https://www.theguardian.com/world/rss',
   ];
 
+  const categoryKeywords: Record<string, string[]> = {
+    technology: ['tech', 'software', 'ai', 'computer', 'digital', 'chip', 'silicon', 'semiconductor'],
+    business: ['business', 'economy', 'market', 'finance', 'company', 'stocks', 'shares'],
+    science: ['science', 'research', 'study', 'space', 'nasa', 'scientist', 'physics', 'chemistry'],
+    health: ['health', 'medical', 'disease', 'treatment', 'doctor', 'vaccine'],
+    politics: ['politic', 'election', 'government', 'senate', 'congress', 'minister', 'president'],
+    sports: ['sport', 'football', 'basketball', 'tennis', 'game', 'match'],
+    entertainment: ['entertainment', 'movie', 'music', 'celebrity', 'film', 'tv'],
+  };
+
   const allNews: NewsItem[] = [];
 
   for (const feedUrl of feeds) {
@@ -43,13 +53,24 @@ async function fetchFromRSSFeeds(): Promise<NewsItem[]> {
             // Keep default source if URL parsing fails
           }
 
+          // Determine category from title/source keywords
+          const lowerTitle = title.toLowerCase();
+          const lowerSource = source.toLowerCase();
+          let detectedCategory = 'general';
+          for (const [cat, keywords] of Object.entries(categoryKeywords)) {
+            if (keywords.some(k => lowerTitle.includes(k) || lowerSource.includes(k))) {
+              detectedCategory = cat;
+              break;
+            }
+          }
+
           allNews.push({
             id: `news-${Date.now()}-${Math.random()}`,
             title: title.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>'),
             source,
             url: link,
             publishedAt: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
-            category: 'General',
+            category: detectedCategory,
           });
         }
       }
@@ -70,31 +91,41 @@ async function fetchFromRSSFeeds(): Promise<NewsItem[]> {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const category = searchParams.get('category') || 'general';
+  // Normalize category: frontend uses 'all', backend uses 'general' as the no-filter default
+  const rawCategory = searchParams.get('category') || 'general';
+  const category = rawCategory === 'all' ? 'general' : rawCategory;
   const limit = Math.min(parseInt(searchParams.get('limit') || '15'), 25);
 
   try {
-    const allNews = await fetchFromRSSFeeds();
+    let allNews = await fetchFromRSSFeeds();
 
-    // Filter by category if needed (basic implementation)
+
+
+    // Filter by category if needed; prefer detected item.category, fallback to keyword matching
     let filteredNews = allNews;
     if (category !== 'general') {
-      // Simple keyword filtering
-      const categoryKeywords: Record<string, string[]> = {
-        technology: ['tech', 'software', 'ai', 'computer', 'digital'],
-        business: ['business', 'economy', 'market', 'finance', 'company'],
-        sports: ['sport', 'football', 'basketball', 'tennis', 'game'],
-        health: ['health', 'medical', 'disease', 'treatment', 'doctor'],
-        entertainment: ['entertainment', 'movie', 'music', 'celebrity', 'film'],
-      };
+      filteredNews = allNews.filter(item => (item.category || '').toLowerCase() === category);
 
-      const keywords = categoryKeywords[category] || [];
-      filteredNews = allNews.filter(item =>
-        keywords.some(keyword =>
-          item.title.toLowerCase().includes(keyword) ||
-          item.source.toLowerCase().includes(keyword)
-        )
-      );
+      // Fallback: if nothing matched, try keyword matching on title/source
+      if (filteredNews.length === 0) {
+        const fallbackKeywords: Record<string, string[]> = {
+          technology: ['tech', 'software', 'ai', 'computer', 'digital', 'chip', 'semiconductor'],
+          business: ['business', 'economy', 'market', 'finance', 'company', 'stocks', 'shares'],
+          science: ['science', 'research', 'study', 'space', 'nasa', 'scientist', 'physics', 'chemistry'],
+          health: ['health', 'medical', 'disease', 'treatment', 'doctor', 'vaccine'],
+          politics: ['politic', 'election', 'government', 'senate', 'congress', 'minister', 'president'],
+          sports: ['sport', 'football', 'basketball', 'tennis', 'game', 'match'],
+          entertainment: ['entertainment', 'movie', 'music', 'celebrity', 'film', 'tv'],
+        };
+
+        const keywords = fallbackKeywords[category] || [];
+        filteredNews = allNews.filter(item =>
+          keywords.some(keyword =>
+            item.title.toLowerCase().includes(keyword) ||
+            item.source.toLowerCase().includes(keyword)
+          )
+        );
+      }
     }
 
     const result: ApiResponse<NewsItem[]> = {

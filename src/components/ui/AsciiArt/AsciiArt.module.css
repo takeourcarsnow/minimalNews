@@ -4,6 +4,7 @@
   line-height: 1.2;
   white-space: pre;
   overflow-x: auto;
+  overflow-y: hidden;
   margin: 0;
 }
 

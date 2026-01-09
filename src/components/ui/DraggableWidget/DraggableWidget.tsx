@@ -31,10 +31,9 @@ export default function DraggableWidget({ id, children }: DraggableWidgetProps) 
       ref={setNodeRef}
       style={style}
       className={styles.draggable}
-      {...attributes}
-      {...listeners}
+      {...attributes} // keep accessibility attributes on the item
     >
-      <div className={styles.dragHandle}>
+      <div className={styles.dragHandle} {...listeners} tabIndex={0} aria-label="Drag widget">
         <span className={styles.dragIcon}>⋮⋮</span>
       </div>
       <div className={styles.content}>
