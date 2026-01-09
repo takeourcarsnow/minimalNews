@@ -31,17 +31,29 @@ export default function NewsWidget({ category: initialCategory = 'all' }: NewsWi
     setError(null);
 
     try {
+      console.log('Fetching news for category:', category);
       const response = await fetch(`/api/news?category=${category}&limit=10`);
+      console.log('News API response status:', response.status);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
       const result: ApiResponse<NewsItem[]> = await response.json();
+      console.log('News API result:', result);
 
       if (result.data) {
         setNews(result.data);
+        console.log('Set news data:', result.data.length, 'items');
       }
       if (result.error) {
         setError(result.error);
+        console.error('News API error:', result.error);
       }
     } catch (err) {
-      setError('Failed to fetch news');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch news';
+      setError(errorMessage);
+      console.error('News fetch error:', err);
     } finally {
       setLoading(false);
     }

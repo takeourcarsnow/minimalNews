@@ -73,6 +73,17 @@ export interface SocialTrending {
     stars: number;
     url: string;
   }[];
+  reddit: {
+    name: string;
+    subscribers: number;
+    description: string;
+  }[];
+  hackernews: {
+    title: string;
+    score: number;
+    comments: number;
+    url: string;
+  }[];
 }
 
 export interface QuoteOfTheDay {

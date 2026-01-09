@@ -31,33 +31,49 @@ export async function GET(request: Request) {
   const location = searchParams.get('location') || 'New York';
 
   try {
-    // For now, return mock data to ensure the widget works
-    const mockWeatherData: WeatherData = {
-      location: location,
-      current: {
-        temp: Math.floor(Math.random() * 30) + 10, // Random temp between 10-40
-        feels_like: Math.floor(Math.random() * 30) + 12,
-        humidity: Math.floor(Math.random() * 40) + 40, // 40-80%
-        wind_speed: Math.floor(Math.random() * 20) + 5, // 5-25 km/h
-        wind_direction: ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.floor(Math.random() * 8)],
-        condition: ['Sunny', 'Partly cloudy', 'Cloudy', 'Rain', 'Light rain'][Math.floor(Math.random() * 5)],
-        icon: ['☀', '⛅', '☁', '🌧', '🌦'][Math.floor(Math.random() * 5)],
-        visibility: Math.floor(Math.random() * 10) + 5, // 5-15 km
-        pressure: Math.floor(Math.random() * 50) + 990, // 990-1040 hPa
+    // Use wttr.in for real weather data (no API key required)
+    const wttrUrl = `https://wttr.in/${encodeURIComponent(location)}?format=j1`;
+    const response = await fetch(wttrUrl, {
+      headers: {
+        'User-Agent': 'Terminal-Detox-App/1.0',
       },
-      forecast: Array.from({ length: 5 }, (_, i) => ({
-        date: new Date(Date.now() + i * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        high: Math.floor(Math.random() * 15) + 20, // 20-35°C
-        low: Math.floor(Math.random() * 10) + 10, // 10-20°C
-        condition: ['Sunny', 'Partly cloudy', 'Cloudy', 'Rain'][Math.floor(Math.random() * 4)],
-        icon: ['☀', '⛅', '☁', '🌧'][Math.floor(Math.random() * 4)],
-        precipitation: Math.floor(Math.random() * 10), // 0-10mm
+      next: { revalidate: 1800 }, // Cache for 30 minutes
+    });
+
+    if (!response.ok) {
+      throw new Error('Weather service unavailable');
+    }
+
+    const data = await response.json();
+    const current = data.current_condition[0];
+    const weather = data.weather[0];
+
+    const weatherData: WeatherData = {
+      location: data.nearest_area[0].areaName[0].value,
+      current: {
+        temp: parseInt(current.temp_C),
+        feels_like: parseInt(current.FeelsLikeC),
+        humidity: parseInt(current.humidity),
+        wind_speed: parseInt(current.windspeedKmph),
+        wind_direction: current.winddir16Point,
+        condition: current.weatherDesc[0].value,
+        icon: conditionIcons[current.weatherDesc[0].value] || '☀',
+        visibility: parseInt(current.visibility),
+        pressure: parseInt(current.pressure),
+      },
+      forecast: data.weather.slice(0, 5).map((day: any) => ({
+        date: day.date,
+        high: parseInt(day.maxtempC),
+        low: parseInt(day.mintempC),
+        condition: day.hourly[4].weatherDesc[0].value, // Midday condition
+        icon: conditionIcons[day.hourly[4].weatherDesc[0].value] || '☀',
+        precipitation: parseInt(day.hourly[4].chanceofrain) || 0,
       })),
       lastUpdated: new Date().toISOString(),
     };
 
     const result: ApiResponse<WeatherData> = {
-      data: mockWeatherData,
+      data: weatherData,
       error: null,
       timestamp: new Date().toISOString(),
     };

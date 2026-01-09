@@ -1,104 +1,99 @@
 import { NextResponse } from 'next/server';
 import type { NewsItem, ApiResponse } from '@/types/api';
 
-// Using multiple free news sources
-async function fetchFromMultipleSources(): Promise<NewsItem[]> {
-  const allNews: NewsItem[] = [];
-
-  // Try fetching from different RSS/JSON sources
-  try {
-    // NPR News
-    const nprResponse = await fetch('https://text.npr.org/', {
-      next: { revalidate: 600 },
-    });
-    // This is HTML, we'll use mock data instead for reliability
-  } catch (e) {
-    console.log('NPR fetch failed');
-  }
-
-  // Return curated mock news for now (in production, use NewsAPI, RSS feeds, etc.)
-  const mockNews: NewsItem[] = [
-    {
-      id: 'news-1',
-      title: 'Global Climate Summit Reaches Historic Agreement',
-      source: 'World News',
-      url: 'https://example.com/climate',
-      publishedAt: new Date().toISOString(),
-      category: 'Environment',
-    },
-    {
-      id: 'news-2',
-      title: 'Tech Giants Report Record Quarterly Earnings',
-      source: 'Business Wire',
-      url: 'https://example.com/tech',
-      publishedAt: new Date().toISOString(),
-      category: 'Business',
-    },
-    {
-      id: 'news-3',
-      title: 'New Study Reveals Benefits of Mediterranean Diet',
-      source: 'Health Today',
-      url: 'https://example.com/health',
-      publishedAt: new Date().toISOString(),
-      category: 'Health',
-    },
-    {
-      id: 'news-4',
-      title: 'Space Agency Announces Mission to Europa',
-      source: 'Science Daily',
-      url: 'https://example.com/space',
-      publishedAt: new Date().toISOString(),
-      category: 'Science',
-    },
-    {
-      id: 'news-5',
-      title: 'Markets Rally on Positive Economic Data',
-      source: 'Financial Times',
-      url: 'https://example.com/markets',
-      publishedAt: new Date().toISOString(),
-      category: 'Finance',
-    },
-    {
-      id: 'news-6',
-      title: 'New AI Model Sets Performance Records',
-      source: 'Tech Review',
-      url: 'https://example.com/ai',
-      publishedAt: new Date().toISOString(),
-      category: 'Technology',
-    },
-    {
-      id: 'news-7',
-      title: 'International Film Festival Announces Winners',
-      source: 'Entertainment Weekly',
-      url: 'https://example.com/film',
-      publishedAt: new Date().toISOString(),
-      category: 'Entertainment',
-    },
-    {
-      id: 'news-8',
-      title: 'Historic Peace Treaty Signed After Decades of Conflict',
-      source: 'Global Affairs',
-      url: 'https://example.com/peace',
-      publishedAt: new Date().toISOString(),
-      category: 'Politics',
-    },
+// Using multiple free RSS feeds
+async function fetchFromRSSFeeds(): Promise<NewsItem[]> {
+  const feeds = [
+    'https://feeds.bbci.co.uk/news/rss.xml',
+    'https://feeds.npr.org/1001/rss.xml',
+    'https://www.theguardian.com/world/rss',
   ];
 
-  return [...allNews, ...mockNews];
+  const allNews: NewsItem[] = [];
+
+  for (const feedUrl of feeds) {
+    try {
+      const response = await fetch(feedUrl, {
+        headers: {
+          'User-Agent': 'Terminal-Detox-App/1.0',
+        },
+        next: { revalidate: 600 }, // Cache for 10 minutes
+      });
+
+      if (!response.ok) continue;
+
+      const xmlText = await response.text();
+
+      // Simple RSS parsing (in production, use a proper RSS parser)
+      const items = xmlText.match(/<item>[\s\S]*?<\/item>/g) || [];
+
+      for (const item of items.slice(0, 5)) { // Limit per feed
+        const title = item.match(/<title>(.*?)<\/title>/)?.[1]?.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1');
+        const link = item.match(/<link>(.*?)<\/link>/)?.[1];
+        const pubDate = item.match(/<pubDate>(.*?)<\/pubDate>/)?.[1];
+
+        if (title && link) {
+          // Extract source from URL
+          let source = 'News';
+          try {
+            const url = new URL(link);
+            source = url.hostname.replace('www.', '').replace('.com', '').replace('.co.uk', '');
+            source = source.charAt(0).toUpperCase() + source.slice(1);
+          } catch (e) {
+            // Keep default source if URL parsing fails
+          }
+
+          allNews.push({
+            id: `news-${Date.now()}-${Math.random()}`,
+            title: title.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>'),
+            source,
+            url: link,
+            publishedAt: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
+            category: 'General',
+          });
+        }
+      }
+    } catch (error) {
+      // Continue with other feeds if one fails
+    }
+  }
+
+  // Remove duplicates and sort by date
+  const uniqueNews = allNews.filter((item, index, self) =>
+    index === self.findIndex(t => t.title === item.title)
+  );
+
+  return uniqueNews
+    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+    .slice(0, 20);
 }
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const category = searchParams.get('category') || 'all';
-  const limit = Math.min(parseInt(searchParams.get('limit') || '10'), 20);
+  const category = searchParams.get('category') || 'general';
+  const limit = Math.min(parseInt(searchParams.get('limit') || '15'), 25);
 
   try {
-    const news = await fetchFromMultipleSources();
-    
-    let filteredNews = news;
-    if (category !== 'all') {
-      filteredNews = news.filter(
-        (item) => item.category?.toLowerCase() === category.toLowerCase()
+    const allNews = await fetchFromRSSFeeds();
+
+    // Filter by category if needed (basic implementation)
+    let filteredNews = allNews;
+    if (category !== 'general') {
+      // Simple keyword filtering
+      const categoryKeywords: Record<string, string[]> = {
+        technology: ['tech', 'software', 'ai', 'computer', 'digital'],
+        business: ['business', 'economy', 'market', 'finance', 'company'],
+        sports: ['sport', 'football', 'basketball', 'tennis', 'game'],
+        health: ['health', 'medical', 'disease', 'treatment', 'doctor'],
+        entertainment: ['entertainment', 'movie', 'music', 'celebrity', 'film'],
+      };
+
+      const keywords = categoryKeywords[category] || [];
+      filteredNews = allNews.filter(item =>
+        keywords.some(keyword =>
+          item.title.toLowerCase().includes(keyword) ||
+          item.source.toLowerCase().includes(keyword)
+        )
       );
     }
 
@@ -110,8 +105,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('News API error:', error);
+    console.error('News fetch error:', error);
 
+    // Return empty array as fallback
     const result: ApiResponse<NewsItem[]> = {
       data: [],
       error: 'Failed to fetch news',

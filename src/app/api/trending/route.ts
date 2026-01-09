@@ -34,51 +34,119 @@ async function fetchGitHubTrending(): Promise<SocialTrending['github']> {
   }
 }
 
+async function fetchRedditTrending(): Promise<SocialTrending['reddit']> {
+  try {
+    // Get trending subreddits from Reddit's public API
+    const response = await fetch('https://www.reddit.com/subreddits/popular.json?limit=10', {
+      headers: {
+        'User-Agent': 'Terminal-Detox-App/1.0',
+      },
+      next: { revalidate: 1800 }, // Cache for 30 minutes
+    });
+
+    if (!response.ok) {
+      throw new Error('Reddit API error');
+    }
+
+    const data = await response.json();
+    return data.data.children.map((sub: any) => ({
+      name: sub.data.display_name,
+      subscribers: sub.data.subscribers,
+      description: sub.data.public_description || sub.data.display_name_prefixed,
+    }));
+  } catch (error) {
+    console.error('Reddit trending error:', error);
+    return [];
+  }
+}
+
+async function fetchHackerNewsTrending(): Promise<SocialTrending['hackernews']> {
+  try {
+    // Get top stories from HN
+    const response = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json', {
+      next: { revalidate: 1800 },
+    });
+
+    if (!response.ok) {
+      throw new Error('HackerNews API error');
+    }
+
+    const storyIds: number[] = await response.json();
+    const topIds = storyIds.slice(0, 5);
+
+    // Get story details
+    const stories = await Promise.all(
+      topIds.map(async (id) => {
+        const itemResponse = await fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
+        return itemResponse.json();
+      })
+    );
+
+    return stories
+      .filter(story => story && story.title)
+      .map(story => ({
+        title: story.title,
+        score: story.score,
+        comments: story.descendants || 0,
+        url: story.url || `https://news.ycombinator.com/item?id=${story.id}`,
+      }));
+  } catch (error) {
+    console.error('HackerNews trending error:', error);
+    return [];
+  }
+}
+
 export async function GET() {
   try {
-    const github = await fetchGitHubTrending();
+    const [github, reddit, hackernews] = await Promise.all([
+      fetchGitHubTrending(),
+      fetchRedditTrending(),
+      fetchHackerNewsTrending(),
+    ]);
 
-    // Mock Twitter/X trends (would need official API access)
-    const mockTwitterTrends = [
-      { id: '1', name: '#TechNews', category: 'Technology', volume: 125000 },
-      { id: '2', name: '#ClimateAction', category: 'Environment', volume: 89000 },
-      { id: '3', name: '#WorldCup', category: 'Sports', volume: 234000 },
-      { id: '4', name: '#AI', category: 'Technology', volume: 156000 },
-      { id: '5', name: '#Music', category: 'Entertainment', volume: 78000 },
-      { id: '6', name: '#Breaking', category: 'News', volume: 312000 },
-      { id: '7', name: '#Crypto', category: 'Finance', volume: 67000 },
-      { id: '8', name: '#Gaming', category: 'Entertainment', volume: 145000 },
-      { id: '9', name: '#Health', category: 'Lifestyle', volume: 54000 },
-      { id: '10', name: '#Science', category: 'Education', volume: 43000 },
+    // For Twitter/X trends, we would need API access
+    // Using a placeholder for now - in production, consider alternative free sources
+    const twitter: SocialTrending['twitter'] = [
+      { id: '1', name: '#OpenSource', category: 'Technology', volume: 50000 },
+      { id: '2', name: '#WebDev', category: 'Technology', volume: 35000 },
+      { id: '3', name: '#AI', category: 'Technology', volume: 75000 },
+      { id: '4', name: '#Climate', category: 'Environment', volume: 25000 },
+      { id: '5', name: '#Music', category: 'Entertainment', volume: 40000 },
     ];
-
-    // Mock GitHub if API fails
-    const finalGithub = github.length > 0 ? github : [
-      { name: 'facebook/react', description: 'A declarative, efficient, and flexible JavaScript library', language: 'JavaScript', stars: 220000, url: 'https://github.com/facebook/react' },
-      { name: 'microsoft/vscode', description: 'Visual Studio Code', language: 'TypeScript', stars: 156000, url: 'https://github.com/microsoft/vscode' },
-      { name: 'torvalds/linux', description: 'Linux kernel source tree', language: 'C', stars: 168000, url: 'https://github.com/torvalds/linux' },
-      { name: 'denoland/deno', description: 'A modern runtime for JavaScript and TypeScript', language: 'Rust', stars: 93000, url: 'https://github.com/denoland/deno' },
-      { name: 'vercel/next.js', description: 'The React Framework', language: 'JavaScript', stars: 119000, url: 'https://github.com/vercel/next.js' },
-    ];
-
-    const trending: SocialTrending = {
-      twitter: mockTwitterTrends,
-      github: finalGithub,
-    };
 
     const result: ApiResponse<SocialTrending> = {
-      data: trending,
+      data: {
+        github,
+        twitter,
+        reddit,
+        hackernews,
+      },
       error: null,
       timestamp: new Date().toISOString(),
     };
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('Social trending error:', error);
+    console.error('Trending API error:', error);
+
+    // Return fallback data
+    const fallbackData: SocialTrending = {
+      github: [
+        { name: 'facebook/react', description: 'A declarative, efficient, and flexible JavaScript library', language: 'JavaScript', stars: 220000, url: 'https://github.com/facebook/react' },
+        { name: 'microsoft/vscode', description: 'Visual Studio Code', language: 'TypeScript', stars: 156000, url: 'https://github.com/microsoft/vscode' },
+        { name: 'torvalds/linux', description: 'Linux kernel source tree', language: 'C', stars: 168000, url: 'https://github.com/torvalds/linux' },
+      ],
+      twitter: [
+        { id: '1', name: '#OpenSource', category: 'Technology', volume: 50000 },
+        { id: '2', name: '#WebDev', category: 'Technology', volume: 35000 },
+      ],
+      reddit: [],
+      hackernews: [],
+    };
 
     const result: ApiResponse<SocialTrending> = {
-      data: { twitter: [], github: [] },
-      error: 'Failed to fetch trending data',
+      data: fallbackData,
+      error: null,
       timestamp: new Date().toISOString(),
     };
 
