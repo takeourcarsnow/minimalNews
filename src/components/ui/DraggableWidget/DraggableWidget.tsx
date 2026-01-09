@@ -31,6 +31,7 @@ export default function DraggableWidget({ id, children }: DraggableWidgetProps) 
       ref={setNodeRef}
       style={style}
       className={styles.draggable}
+      suppressHydrationWarning={true}
       {...attributes} // keep accessibility attributes on the item
     >
       <div className={styles.dragHandle} {...listeners} tabIndex={0} aria-label="Drag widget">

@@ -2,12 +2,50 @@ import { NextResponse } from 'next/server';
 import type { NewsItem, ApiResponse } from '@/types/api';
 
 // Using multiple free RSS feeds
-async function fetchFromRSSFeeds(): Promise<NewsItem[]> {
-  const feeds = [
-    'https://feeds.bbci.co.uk/news/rss.xml',
-    'https://feeds.npr.org/1001/rss.xml',
-    'https://www.theguardian.com/world/rss',
-  ];
+async function fetchFromRSSFeeds(category: string): Promise<NewsItem[]> {
+  let feeds: string[];
+
+  if (category === 'general') {
+    feeds = [
+      'https://feeds.bbci.co.uk/news/rss.xml',
+      'https://feeds.npr.org/1001/rss.xml',
+      'https://www.theguardian.com/world/rss',
+    ];
+  } else {
+    // Category-specific feeds
+    const categoryFeeds: Record<string, string[]> = {
+      technology: [
+        'https://feeds.bbci.co.uk/news/technology/rss.xml',
+        'https://rss.cnn.com/rss/edition_technology.rss',
+      ],
+      business: [
+        'https://feeds.bbci.co.uk/news/business/rss.xml',
+        'https://feeds.npr.org/1006/rss.xml', // NPR Business
+      ],
+      science: [
+        'https://feeds.bbci.co.uk/news/science_and_environment/rss.xml',
+        'https://www.sciencenews.org/feed',
+      ],
+      health: [
+        'https://feeds.bbci.co.uk/news/health/rss.xml',
+        'https://www.npr.org/rss/rss.php?id=1027', // NPR Health
+      ],
+      politics: [
+        'https://feeds.bbci.co.uk/news/politics/rss.xml',
+        'https://feeds.npr.org/1014/rss.xml', // NPR Politics
+      ],
+      sports: [
+        'https://feeds.bbci.co.uk/sport/rss.xml',
+      ],
+      entertainment: [
+        'https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml',
+      ],
+    };
+    feeds = categoryFeeds[category] || [
+      'https://feeds.bbci.co.uk/news/rss.xml',
+      'https://feeds.npr.org/1001/rss.xml',
+    ];
+  }
 
   const categoryKeywords: Record<string, string[]> = {
     technology: ['tech', 'software', 'ai', 'computer', 'digital', 'chip', 'silicon', 'semiconductor'],
@@ -54,15 +92,7 @@ async function fetchFromRSSFeeds(): Promise<NewsItem[]> {
           }
 
           // Determine category from title/source keywords
-          const lowerTitle = title.toLowerCase();
-          const lowerSource = source.toLowerCase();
-          let detectedCategory = 'general';
-          for (const [cat, keywords] of Object.entries(categoryKeywords)) {
-            if (keywords.some(k => lowerTitle.includes(k) || lowerSource.includes(k))) {
-              detectedCategory = cat;
-              break;
-            }
-          }
+          let detectedCategory = category === 'general' ? 'general' : category;
 
           allNews.push({
             id: `news-${Date.now()}-${Math.random()}`,
@@ -97,35 +127,30 @@ export async function GET(request: Request) {
   const limit = Math.min(parseInt(searchParams.get('limit') || '15'), 25);
 
   try {
-    let allNews = await fetchFromRSSFeeds();
+    let allNews = await fetchFromRSSFeeds(category);
 
 
 
-    // Filter by category if needed; prefer detected item.category, fallback to keyword matching
+    // Filter by category using keyword matching on title/source
     let filteredNews = allNews;
     if (category !== 'general') {
-      filteredNews = allNews.filter(item => (item.category || '').toLowerCase() === category);
+      const fallbackKeywords: Record<string, string[]> = {
+        technology: ['tech', 'software', 'ai', 'computer', 'digital', 'chip', 'semiconductor', 'internet', 'app', 'device'],
+        business: ['business', 'economy', 'market', 'finance', 'company', 'stocks', 'shares', 'trade', 'bank', 'corporate'],
+        science: ['science', 'research', 'study', 'space', 'nasa', 'scientist', 'physics', 'chemistry', 'biology', 'discovery'],
+        health: ['health', 'medical', 'disease', 'treatment', 'doctor', 'vaccine', 'hospital', 'patient', 'drug'],
+        politics: ['politic', 'election', 'government', 'senate', 'congress', 'minister', 'president', 'policy', 'law'],
+        sports: ['sport', 'football', 'basketball', 'tennis', 'game', 'match', 'athlete', 'olympic'],
+        entertainment: ['entertainment', 'movie', 'music', 'celebrity', 'film', 'tv', 'actor', 'show'],
+      };
 
-      // Fallback: if nothing matched, try keyword matching on title/source
-      if (filteredNews.length === 0) {
-        const fallbackKeywords: Record<string, string[]> = {
-          technology: ['tech', 'software', 'ai', 'computer', 'digital', 'chip', 'semiconductor'],
-          business: ['business', 'economy', 'market', 'finance', 'company', 'stocks', 'shares'],
-          science: ['science', 'research', 'study', 'space', 'nasa', 'scientist', 'physics', 'chemistry'],
-          health: ['health', 'medical', 'disease', 'treatment', 'doctor', 'vaccine'],
-          politics: ['politic', 'election', 'government', 'senate', 'congress', 'minister', 'president'],
-          sports: ['sport', 'football', 'basketball', 'tennis', 'game', 'match'],
-          entertainment: ['entertainment', 'movie', 'music', 'celebrity', 'film', 'tv'],
-        };
-
-        const keywords = fallbackKeywords[category] || [];
-        filteredNews = allNews.filter(item =>
-          keywords.some(keyword =>
-            item.title.toLowerCase().includes(keyword) ||
-            item.source.toLowerCase().includes(keyword)
-          )
-        );
-      }
+      const keywords = fallbackKeywords[category] || [];
+      filteredNews = allNews.filter(item =>
+        keywords.some(keyword =>
+          item.title.toLowerCase().includes(keyword) ||
+          item.source.toLowerCase().includes(keyword)
+        )
+      );
     }
 
     const result: ApiResponse<NewsItem[]> = {
