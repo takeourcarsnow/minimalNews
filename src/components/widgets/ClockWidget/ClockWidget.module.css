@@ -1,0 +1,48 @@
+.container {
+  text-align: center;
+  padding: var(--spacing-md) 0;
+}
+
+.time {
+  font-family: var(--font-mono);
+  font-size: 2.5rem;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+}
+
+.hours,
+.minutes {
+  color: var(--primary);
+}
+
+.colon {
+  color: var(--muted);
+  animation: blink 1s step-end infinite;
+}
+
+.seconds {
+  color: var(--secondary);
+  font-size: 1.5rem;
+  vertical-align: super;
+}
+
+.date {
+  margin-top: var(--spacing-xs);
+  color: var(--muted);
+  font-size: var(--font-size-sm);
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@media (max-width: 480px) {
+  .time {
+    font-size: 1.8rem;
+  }
+  
+  .seconds {
+    font-size: 1rem;
+  }
+}

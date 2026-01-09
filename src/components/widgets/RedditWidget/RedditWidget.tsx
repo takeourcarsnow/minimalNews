@@ -1,0 +1,133 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import type { RedditPost, ApiResponse } from '@/types/api';
+import TerminalBox from '@/components/ui/TerminalBox';
+import styles from './RedditWidget.module.css';
+
+const SUBREDDITS = ['all', 'programming', 'technology', 'science', 'worldnews', 'todayilearned'];
+const SORT_OPTIONS = ['hot', 'top', 'new', 'rising'];
+
+function formatScore(score: number): string {
+  if (score >= 10000) {
+    return `${(score / 1000).toFixed(1)}k`;
+  }
+  if (score >= 1000) {
+    return `${(score / 1000).toFixed(1)}k`;
+  }
+  return score.toString();
+}
+
+function timeAgo(dateStr: string): string {
+  const now = new Date();
+  const date = new Date(dateStr);
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (seconds < 60) return `${seconds}s ago`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  return `${Math.floor(seconds / 86400)}d ago`;
+}
+
+export default function RedditWidget() {
+  const [posts, setPosts] = useState<RedditPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [subreddit, setSubreddit] = useState('all');
+  const [sort, setSort] = useState('hot');
+
+  useEffect(() => {
+    fetchPosts();
+  }, [subreddit, sort]);
+
+  async function fetchPosts() {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(
+        `/api/reddit?subreddit=${subreddit}&sort=${sort}&limit=10`
+      );
+      const result: ApiResponse<RedditPost[]> = await response.json();
+
+      if (result.data) {
+        setPosts(result.data);
+      }
+      if (result.error) {
+        setError(result.error);
+      }
+    } catch (err) {
+      setError('Failed to fetch Reddit posts');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <TerminalBox
+      title={`reddit --r/${subreddit}`}
+      icon="🔥"
+      status={`${posts.length} posts`}
+      loading={loading}
+      error={loading ? null : error}
+    >
+      <div className={styles.container}>
+        <div className={styles.controls}>
+          <div className={styles.subreddits}>
+            <span className={styles.label}>r/</span>
+            {SUBREDDITS.map((sub) => (
+              <button
+                key={sub}
+                onClick={() => setSubreddit(sub)}
+                className={`${styles.btn} ${subreddit === sub ? styles.active : ''}`}
+              >
+                {sub}
+              </button>
+            ))}
+          </div>
+          <div className={styles.sortOptions}>
+            {SORT_OPTIONS.map((s) => (
+              <button
+                key={s}
+                onClick={() => setSort(s)}
+                className={`${styles.sortBtn} ${sort === s ? styles.active : ''}`}
+              >
+                [{s}]
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <ul className={styles.list}>
+          {posts.map((post, index) => (
+            <li key={post.id} className={styles.item}>
+              <div className={styles.score}>
+                <span className={styles.scoreValue}>{formatScore(post.score)}</span>
+                <span className={styles.scoreArrow}>▲</span>
+              </div>
+              <div className={styles.content}>
+                <a
+                  href={post.permalink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.title}
+                >
+                  {post.title}
+                </a>
+                <div className={styles.meta}>
+                  <span className={styles.subredditName}>r/{post.subreddit}</span>
+                  <span>•</span>
+                  <span>u/{post.author}</span>
+                  <span>•</span>
+                  <span>{post.numComments} comments</span>
+                  <span>•</span>
+                  <span>{timeAgo(post.createdAt)}</span>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </TerminalBox>
+  );
+}

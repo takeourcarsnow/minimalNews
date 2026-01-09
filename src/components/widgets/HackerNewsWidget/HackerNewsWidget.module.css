@@ -1,0 +1,142 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px dashed var(--border);
+}
+
+.tab {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  padding: var(--spacing-xs);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.tab:hover {
+  color: var(--fg);
+}
+
+.tab.active {
+  color: var(--accent);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-xs);
+}
+
+.table th {
+  text-align: left;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-weight: normal;
+  text-transform: uppercase;
+  font-size: 0.65rem;
+}
+
+.table td {
+  padding: var(--spacing-sm) var(--spacing-sm);
+  border-bottom: 1px dashed var(--border);
+  vertical-align: top;
+}
+
+.thRank {
+  width: 30px;
+}
+
+.thScore {
+  width: 50px;
+}
+
+.thMeta {
+  width: 120px;
+}
+
+.row:hover td {
+  background-color: color-mix(in srgb, var(--bg) 90%, var(--fg) 10%);
+}
+
+.rank {
+  color: var(--muted);
+  text-align: center;
+}
+
+.score {
+  color: var(--accent);
+  font-weight: bold;
+}
+
+.title {
+  line-height: 1.4;
+}
+
+.link {
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.link:hover {
+  color: var(--primary);
+}
+
+.domain {
+  color: var(--muted);
+  font-size: 0.65rem;
+  margin-left: var(--spacing-xs);
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--muted);
+  font-size: 0.65rem;
+}
+
+.by {
+  color: var(--secondary);
+}
+
+.comments {
+  color: var(--info);
+  text-decoration: none;
+}
+
+.comments:hover {
+  text-decoration: underline;
+}
+
+.time {
+  color: var(--muted);
+}
+
+@media (max-width: 768px) {
+  .thMeta,
+  .meta {
+    display: none;
+  }
+  
+  .domain {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .thScore,
+  .score {
+    display: none;
+  }
+}

@@ -1,0 +1,45 @@
+import ThemeToggle from '@/components/ui/ThemeToggle';
+import ClockWidget from '@/components/widgets/ClockWidget';
+import styles from './Header.module.css';
+
+const ASCII_LOGO = `
+╔═══════════════════════════════════════════════════════════════╗
+║  ████████╗███████╗██████╗ ███╗   ███╗██╗███╗   ██╗ █████╗ ██╗ ║
+║  ╚══██╔══╝██╔════╝██╔══██╗████╗ ████║██║████╗  ██║██╔══██╗██║ ║
+║     ██║   █████╗  ██████╔╝██╔████╔██║██║██╔██╗ ██║███████║██║ ║
+║     ██║   ██╔══╝  ██╔══██╗██║╚██╔╝██║██║██║╚██╗██║██╔══██║██║ ║
+║     ██║   ███████╗██║  ██║██║ ╚═╝ ██║██║██║ ╚████║██║  ██║███╗║
+║     ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚══╝║
+║              ══════ DIGITAL DETOX HUB ══════                  ║
+╚═══════════════════════════════════════════════════════════════╝`;
+
+const ASCII_LOGO_MOBILE = `
+┌─────────────────────┐
+│  TERMINAL DETOX     │
+│  ════════════════   │
+│  digital essentials │
+└─────────────────────┘`;
+
+export default function Header() {
+  return (
+    <header className={styles.header}>
+      <div className={styles.logoContainer}>
+        <pre className={styles.logo} aria-label="Terminal Detox">{ASCII_LOGO}</pre>
+        <pre className={styles.logoMobile} aria-label="Terminal Detox">{ASCII_LOGO_MOBILE}</pre>
+      </div>
+      <div className={styles.headerContent}>
+        <ClockWidget />
+        <div className={styles.controls}>
+          <ThemeToggle />
+          <a href="#" className={styles.helpLink}>[?] help</a>
+        </div>
+      </div>
+      <div className={styles.tagline}>
+        <span className={styles.prompt}>$</span>
+        <span className={styles.command}>fetch</span>
+        <span className={styles.args}>--weather --news --reddit --hackernews --trending</span>
+        <span className={styles.cursor}>▋</span>
+      </div>
+    </header>
+  );
+}

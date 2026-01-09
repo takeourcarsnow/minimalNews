@@ -1,0 +1,27 @@
+.container {
+  text-align: center;
+  padding: var(--spacing-lg);
+  border: 1px dashed var(--border);
+  margin-bottom: var(--spacing-md);
+}
+
+.quote {
+  font-size: var(--font-size-base);
+  color: var(--fg);
+  line-height: 1.6;
+  font-style: italic;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.mark {
+  color: var(--primary);
+  font-size: var(--font-size-xl);
+  font-style: normal;
+}
+
+.author {
+  margin-top: var(--spacing-sm);
+  color: var(--secondary);
+  font-size: var(--font-size-sm);
+}

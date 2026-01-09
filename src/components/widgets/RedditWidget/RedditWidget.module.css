@@ -1,0 +1,144 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px dashed var(--border);
+}
+
+.subreddits {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.label {
+  color: var(--accent);
+  font-weight: bold;
+}
+
+.btn {
+  background: transparent;
+  border: none;
+  color: var(--secondary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  padding: var(--spacing-xs);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.btn:hover {
+  color: var(--primary);
+}
+
+.btn.active {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.sortOptions {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.sortBtn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.sortBtn:hover {
+  color: var(--fg);
+}
+
+.sortBtn.active {
+  color: var(--success);
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.item {
+  display: flex;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px dashed var(--border);
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 50px;
+  font-size: var(--font-size-xs);
+}
+
+.scoreValue {
+  color: var(--accent);
+  font-weight: bold;
+}
+
+.scoreArrow {
+  color: var(--success);
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.title {
+  color: var(--fg);
+  text-decoration: none;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.title:hover {
+  color: var(--primary);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  color: var(--muted);
+}
+
+.subredditName {
+  color: var(--primary);
+}
+
+@media (max-width: 600px) {
+  .meta {
+    flex-direction: column;
+    gap: 2px;
+  }
+  
+  .meta span:nth-child(even) {
+    display: none;
+  }
+}

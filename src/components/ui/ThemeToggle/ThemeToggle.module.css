@@ -1,0 +1,32 @@
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle:hover {
+  background-color: var(--border);
+  color: var(--primary);
+}
+
+.icon {
+  font-size: var(--font-size-base);
+}
+
+.label {
+  color: var(--secondary);
+}
+
+@media (max-width: 480px) {
+  .label {
+    display: none;
+  }
+}

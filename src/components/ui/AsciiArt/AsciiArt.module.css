@@ -1,0 +1,26 @@
+.art {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  line-height: 1.2;
+  white-space: pre;
+  overflow-x: auto;
+  margin: 0;
+}
+
+.centered {
+  text-align: center;
+}
+
+.primary { color: var(--primary); }
+.secondary { color: var(--secondary); }
+.accent { color: var(--accent); }
+.success { color: var(--success); }
+.warning { color: var(--warning); }
+.error { color: var(--error); }
+.muted { color: var(--muted); }
+
+@media (max-width: 600px) {
+  .art {
+    font-size: 0.6rem;
+  }
+}
