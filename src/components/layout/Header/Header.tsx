@@ -4,6 +4,10 @@ import ThemeToggle from '@/components/ui/ThemeToggle';
 import ClockWidget from '@/components/widgets/ClockWidget';
 import styles from './Header.module.css';
 
+interface HeaderProps {
+  onOpenCli?: () => void;
+}
+
 const ASCII_LOGO = `
 ╔═══════════════════════════════════════════════════════════════╗
 ║  ████████╗███████╗██████╗ ███╗   ███╗██╗███╗   ██╗ █████╗ ██╗ ║
@@ -22,7 +26,7 @@ const ASCII_LOGO_MOBILE = `
 │  digital essentials │
 └─────────────────────┘`;
 
-export default function Header() {
+export default function Header({ onOpenCli }: HeaderProps) {
   return (
     <header className={styles.header}>
       <div className={styles.logoContainer}>
@@ -33,6 +37,11 @@ export default function Header() {
         <ClockWidget />
         <div className={styles.controls}>
           <ThemeToggle />
+          {onOpenCli && (
+            <button onClick={onOpenCli} className={styles.cliButton}>
+              [⌘] cli
+            </button>
+          )}
           <a href="#" className={styles.helpLink}>[?] help</a>
         </div>
       </div>

@@ -8,11 +8,19 @@ import styles from './NewsWidget.module.css';
 
 const CATEGORIES = ['all', 'technology', 'business', 'science', 'health', 'politics'];
 
-export default function NewsWidget() {
+interface NewsWidgetProps {
+  category?: string;
+}
+
+export default function NewsWidget({ category: initialCategory = 'all' }: NewsWidgetProps) {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [category, setCategory] = useState('all');
+  const [category, setCategory] = useState(initialCategory);
+
+  useEffect(() => {
+    setCategory(initialCategory);
+  }, [initialCategory]);
 
   useEffect(() => {
     fetchNews();

@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import TypingAnimation from '@/components/ui/TypingAnimation';
 import styles from './TerminalBox.module.css';
 
 interface TerminalBoxProps {
@@ -36,7 +37,7 @@ export default function TerminalBox({
         {loading ? (
           <div className={styles.loading}>
             <span className={styles.spinner}>◐</span>
-            <span>Loading...</span>
+            <TypingAnimation text="Loading..." speed={100} />
           </div>
         ) : error ? (
           <div className={styles.error}>

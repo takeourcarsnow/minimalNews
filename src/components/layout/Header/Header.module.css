@@ -43,6 +43,23 @@
   gap: var(--spacing-md);
 }
 
+.cliButton {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--foreground);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cliButton:hover {
+  background: var(--muted);
+  border-color: var(--primary);
+}
+
 .helpLink {
   color: var(--muted);
   font-size: var(--font-size-xs);

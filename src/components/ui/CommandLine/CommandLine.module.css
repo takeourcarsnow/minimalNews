@@ -1,0 +1,154 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modal {
+  width: 90vw;
+  max-width: 800px;
+  height: 80vh;
+  max-height: 600px;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-sm);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-muted);
+  border-radius: 8px 8px 0 0;
+}
+
+.dots {
+  display: flex;
+  gap: 6px;
+  margin-right: var(--spacing-md);
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.red {
+  background: #ff5f57;
+}
+
+.yellow {
+  background: #ffbd2e;
+}
+
+.green {
+  background: #28ca42;
+}
+
+.title {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--color-foreground);
+}
+
+.icon {
+  color: var(--color-primary);
+}
+
+.close {
+  background: none;
+  border: none;
+  color: var(--color-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.close:hover {
+  background: var(--color-border);
+  color: var(--color-foreground);
+}
+
+.terminal {
+  flex: 1;
+  padding: var(--spacing-md);
+  overflow-y: auto;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.line {
+  margin-bottom: var(--spacing-sm);
+}
+
+.inputLine {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--color-foreground);
+}
+
+.prompt {
+  color: var(--color-primary);
+  font-weight: bold;
+}
+
+.output {
+  margin-left: 20px;
+  color: var(--color-secondary);
+  white-space: pre-wrap;
+}
+
+.inputForm {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+}
+
+.input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--color-foreground);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--color-muted);
+}
+
+@media (max-width: 600px) {
+  .modal {
+    width: 95vw;
+    height: 90vh;
+  }
+
+  .terminal {
+    padding: var(--spacing-sm);
+  }
+}

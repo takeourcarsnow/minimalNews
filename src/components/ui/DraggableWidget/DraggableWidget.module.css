@@ -1,0 +1,36 @@
+.draggable {
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.draggable:hover .dragHandle {
+  opacity: 1;
+}
+
+.dragHandle {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  cursor: grab;
+  z-index: 10;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.dragIcon {
+  display: block;
+  color: var(--color-muted);
+  font-size: 12px;
+  line-height: 1;
+  transform: rotate(90deg);
+  user-select: none;
+}
+
+.content {
+  width: 100%;
+  height: 100%;
+}

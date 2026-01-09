@@ -1,3 +1,22 @@
+'use client';
+
+import { useState, useCallback } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import WeatherWidget from '@/components/widgets/WeatherWidget';
@@ -6,34 +25,99 @@ import RedditWidget from '@/components/widgets/RedditWidget';
 import HackerNewsWidget from '@/components/widgets/HackerNewsWidget';
 import TrendingWidget from '@/components/widgets/TrendingWidget';
 import QuoteWidget from '@/components/widgets/QuoteWidget';
+import DraggableWidget from '@/components/ui/DraggableWidget';
+import CommandLine from '@/components/ui/CommandLine';
+import { useWidgets } from '@/context/WidgetContext';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import styles from './page.module.css';
 
+const WIDGET_COMPONENTS = {
+  WeatherWidget,
+  NewsWidget,
+  RedditWidget,
+  HackerNewsWidget,
+  TrendingWidget,
+  QuoteWidget,
+};
+
 export default function Home() {
+  const { widgets, executeCommand, refreshKey } = useWidgets();
+  const [isCliOpen, setIsCliOpen] = useState(false);
+  const [isFocusMode, setIsFocusMode] = useState(false);
+  const [widgetOrder, setWidgetOrder] = useState(widgets.map(w => w.id));
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setWidgetOrder((items) => {
+        const oldIndex = items.indexOf(active.id as string);
+        const newIndex = items.indexOf(over.id as string);
+
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  const handleCommand = useCallback((command: string, args: string[]) => {
+    executeCommand(command, args);
+  }, [executeCommand]);
+
+  const toggleFocusMode = useCallback(() => {
+    setIsFocusMode(prev => !prev);
+  }, []);
+
+  useKeyboardShortcuts({
+    onOpenCli: () => setIsCliOpen(true),
+    onToggleFocus: toggleFocusMode,
+  });
+
+  const renderWidget = (widgetId: string) => {
+    const widget = widgets.find(w => w.id === widgetId);
+    if (!widget) return null;
+
+    const Component = WIDGET_COMPONENTS[widget.component as keyof typeof WIDGET_COMPONENTS];
+    if (!Component) return null;
+
+    return (
+      <DraggableWidget key={`${widget.id}-${refreshKey}`} id={widget.id}>
+        <Component key={`${widget.id}-${refreshKey}-content`} {...widget.props} />
+      </DraggableWidget>
+    );
+  };
+
   return (
-    <div className={styles.container}>
-      <Header />
-      
+    <div className={`${styles.container} ${isFocusMode ? styles.focusMode : ''}`}>
+      <Header onOpenCli={() => setIsCliOpen(true)} />
+
       <main className={styles.main}>
-        <QuoteWidget />
-        
-        <div className={styles.grid}>
-          <div className={styles.column}>
-            <WeatherWidget defaultLocation="New York" />
-            <TrendingWidget />
-          </div>
-          
-          <div className={styles.column}>
-            <HackerNewsWidget />
-            <NewsWidget />
-          </div>
-          
-          <div className={styles.columnFull}>
-            <RedditWidget />
-          </div>
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={widgetOrder} strategy={verticalListSortingStrategy}>
+            <div className={styles.grid}>
+              {widgetOrder.map(renderWidget)}
+            </div>
+          </SortableContext>
+        </DndContext>
       </main>
-      
+
       <Footer />
+
+      <CommandLine
+        isOpen={isCliOpen}
+        onClose={() => setIsCliOpen(false)}
+        onCommand={handleCommand}
+      />
     </div>
   );
 }

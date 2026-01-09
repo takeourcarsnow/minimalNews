@@ -1,12 +1,14 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { Theme } from '@/styles/themes';
+import { Theme, themes } from '@/styles/themes';
 
 interface ThemeContextType {
   theme: Theme;
   toggleTheme: () => void;
   setTheme: (theme: Theme) => void;
+  nextTheme: () => void;
+  availableThemes: Theme[];
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -15,10 +17,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('dark');
   const [mounted, setMounted] = useState(false);
 
+  const availableThemes = Object.keys(themes) as Theme[];
+
   useEffect(() => {
     setMounted(true);
     const savedTheme = localStorage.getItem('theme') as Theme;
-    if (savedTheme && (savedTheme === 'dark' || savedTheme === 'light')) {
+    if (savedTheme && availableThemes.includes(savedTheme)) {
       setThemeState(savedTheme);
     } else {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -38,7 +42,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   };
 
   const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
+    if (availableThemes.includes(newTheme)) {
+      setThemeState(newTheme);
+    }
+  };
+
+  const nextTheme = () => {
+    const currentIndex = availableThemes.indexOf(theme);
+    const nextIndex = (currentIndex + 1) % availableThemes.length;
+    setThemeState(availableThemes[nextIndex]);
   };
 
   // Always render children, just provide default context until mounted
@@ -46,6 +58,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     theme,
     toggleTheme,
     setTheme,
+    nextTheme,
+    availableThemes,
   };
 
   return (

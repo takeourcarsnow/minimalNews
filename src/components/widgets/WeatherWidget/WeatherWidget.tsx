@@ -93,10 +93,68 @@ export default function WeatherWidget({ defaultLocation = 'New York' }: WeatherW
   const [error, setError] = useState<string | null>(null);
   const [location, setLocation] = useState(defaultLocation);
   const [inputValue, setInputValue] = useState(defaultLocation);
+  const [locationDetected, setLocationDetected] = useState(false);
+  const [detectingLocation, setDetectingLocation] = useState(true);
 
+  // Detect user's location on mount
   useEffect(() => {
-    fetchWeather();
-  }, [location]);
+    if (!locationDetected && detectingLocation) {
+      // Use browser's geolocation API (most reliable, no CORS issues)
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const { latitude, longitude } = position.coords;
+            try {
+              // Use BigDataCloud for reverse geocoding (free tier, CORS-friendly)
+              const response = await fetch(
+                `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+              );
+
+              if (response.ok) {
+                const data = await response.json();
+                if (data.city) {
+                  const detectedLocation = `${data.city}${data.principalSubdivision ? ', ' + data.principalSubdivision : ''}`;
+                  setLocation(detectedLocation);
+                  setInputValue(detectedLocation);
+                } else {
+                  // Use coordinates as fallback
+                  const coordLocation = `${latitude.toFixed(2)},${longitude.toFixed(2)}`;
+                  setLocation(coordLocation);
+                  setInputValue(coordLocation);
+                }
+              } else {
+                throw new Error('Geocoding service unavailable');
+              }
+            } catch (err) {
+              console.warn('Geocoding failed:', err);
+              // Use coordinates as final fallback
+              const coordLocation = `${latitude.toFixed(2)},${longitude.toFixed(2)}`;
+              setLocation(coordLocation);
+              setInputValue(coordLocation);
+            } finally {
+              setLocationDetected(true);
+              setDetectingLocation(false);
+            }
+          },
+          (error) => {
+            console.warn('Geolocation error:', error.message);
+            // Keep default location if geolocation fails or is denied
+            setLocationDetected(true);
+            setDetectingLocation(false);
+          },
+          {
+            enableHighAccuracy: false,
+            timeout: 10000,
+            maximumAge: 300000, // 5 minutes
+          }
+        );
+      } else {
+        // No geolocation support
+        setLocationDetected(true);
+        setDetectingLocation(false);
+      }
+    }
+  }, [locationDetected, detectingLocation]);
 
   async function fetchWeather() {
     setLoading(true);
@@ -113,20 +171,26 @@ export default function WeatherWidget({ defaultLocation = 'New York' }: WeatherW
         setError(result.error);
       }
     } catch (err) {
-      setError('Failed to fetch weather data');
+      setError('Failed to fetch weather');
     } finally {
       setLoading(false);
     }
   }
 
+  useEffect(() => {
+    if (locationDetected) {
+      fetchWeather();
+    }
+  }, [location, locationDetected]);
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (inputValue.trim()) {
       setLocation(inputValue.trim());
     }
   }
-
-  const status = weather
+  const status = detectingLocation
+    ? 'Detecting your location...'
+    : weather
     ? `Last updated: ${new Date(weather.lastUpdated).toLocaleTimeString()}`
     : '';
 
@@ -145,10 +209,11 @@ export default function WeatherWidget({ defaultLocation = 'New York' }: WeatherW
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Enter location..."
+            placeholder={detectingLocation ? "Detecting location..." : "Enter location..."}
             className={styles.input}
+            disabled={detectingLocation}
           />
-          <button type="submit" className={styles.button}>
+          <button type="submit" className={styles.button} disabled={detectingLocation}>
             [fetch]
           </button>
         </form>

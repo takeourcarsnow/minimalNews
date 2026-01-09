@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { ThemeProvider } from '@/context/ThemeContext';
+import { WidgetProvider } from '@/context/WidgetContext';
 import '@/styles/globals.css';
 import '@/styles/terminal.css';
 
@@ -53,7 +54,9 @@ export default function RootLayout({
       </head>
       <body>
         <ThemeProvider>
-          {children}
+          <WidgetProvider>
+            {children}
+          </WidgetProvider>
         </ThemeProvider>
       </body>
     </html>

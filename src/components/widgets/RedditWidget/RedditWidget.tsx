@@ -8,6 +8,10 @@ import styles from './RedditWidget.module.css';
 const SUBREDDITS = ['all', 'programming', 'technology', 'science', 'worldnews', 'todayilearned'];
 const SORT_OPTIONS = ['hot', 'top', 'new', 'rising'];
 
+interface RedditWidgetProps {
+  subreddit?: string;
+}
+
 function formatScore(score: number): string {
   if (score >= 10000) {
     return `${(score / 1000).toFixed(1)}k`;
@@ -29,12 +33,16 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(seconds / 86400)}d ago`;
 }
 
-export default function RedditWidget() {
+export default function RedditWidget({ subreddit: initialSubreddit = 'all' }: RedditWidgetProps) {
   const [posts, setPosts] = useState<RedditPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [subreddit, setSubreddit] = useState('all');
+  const [subreddit, setSubreddit] = useState(initialSubreddit);
   const [sort, setSort] = useState('hot');
+
+  useEffect(() => {
+    setSubreddit(initialSubreddit);
+  }, [initialSubreddit]);
 
   useEffect(() => {
     fetchPosts();
