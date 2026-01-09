@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import type { WeatherData, ApiResponse } from '@/types/api';
+import { useState, useEffect, useCallback } from 'react';
+import type { WeatherData } from '@/types/api';
 import TerminalBox from '@/components/ui/TerminalBox';
+import { useWidgetData, useWidgetProps } from '@/hooks/useWidget';
 import styles from './WeatherWidget.module.css';
 
 interface WeatherWidgetProps {
@@ -88,21 +89,24 @@ function formatDate(dateStr: string): string {
 }
 
 export default function WeatherWidget({ defaultLocation = 'New York' }: WeatherWidgetProps) {
-  const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [location, setLocation] = useState(defaultLocation);
+  const { props: { location }, updateProps } = useWidgetProps({ location: defaultLocation });
   const [inputValue, setInputValue] = useState(defaultLocation);
   const [locationDetected, setLocationDetected] = useState(false);
   const [detectingLocation, setDetectingLocation] = useState(true);
 
+  const { data: weather, loading, error, refetch } = useWidgetData<WeatherData>(
+    `/api/weather?location=${encodeURIComponent(location)}`,
+    [location],
+    { initialData: null }
+  );
+
   // React to prop updates from CLI or other actions so the widget updates immediately
   useEffect(() => {
     if (defaultLocation && defaultLocation !== location) {
-      setLocation(defaultLocation);
+      updateProps({ location: defaultLocation });
       setInputValue(defaultLocation);
     }
-  }, [defaultLocation]);
+  }, [defaultLocation, location, updateProps]);
 
   // Detect user's location on mount
   useEffect(() => {
@@ -122,12 +126,12 @@ export default function WeatherWidget({ defaultLocation = 'New York' }: WeatherW
                 const data = await response.json();
                 if (data.city) {
                   const detectedLocation = `${data.city}${data.principalSubdivision ? ', ' + data.principalSubdivision : ''}`;
-                  setLocation(detectedLocation);
+                  updateProps({ location: detectedLocation });
                   setInputValue(detectedLocation);
                 } else {
                   // Use coordinates as fallback
                   const coordLocation = `${latitude.toFixed(2)},${longitude.toFixed(2)}`;
-                  setLocation(coordLocation);
+                  updateProps({ location: coordLocation });
                   setInputValue(coordLocation);
                 }
               } else {
@@ -137,7 +141,7 @@ export default function WeatherWidget({ defaultLocation = 'New York' }: WeatherW
               console.warn('Geocoding failed:', err);
               // Use coordinates as final fallback
               const coordLocation = `${latitude.toFixed(2)},${longitude.toFixed(2)}`;
-              setLocation(coordLocation);
+              updateProps({ location: coordLocation });
               setInputValue(coordLocation);
             } finally {
               setLocationDetected(true);
@@ -162,40 +166,14 @@ export default function WeatherWidget({ defaultLocation = 'New York' }: WeatherW
         setDetectingLocation(false);
       }
     }
-  }, [locationDetected, detectingLocation]);
+  }, [locationDetected, detectingLocation, updateProps]);
 
-  async function fetchWeather() {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(`/api/weather?location=${encodeURIComponent(location)}`);
-      const result: ApiResponse<WeatherData> = await response.json();
-
-      if (result.data) {
-        setWeather(result.data);
-      }
-      if (result.error) {
-        setError(result.error);
-      }
-    } catch (err) {
-      setError('Failed to fetch weather');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    if (locationDetected) {
-      fetchWeather();
-    }
-  }, [location, locationDetected]);
-  function handleSubmit(e: React.FormEvent) {
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (inputValue.trim()) {
-      setLocation(inputValue.trim());
+      updateProps({ location: inputValue.trim() });
     }
-  }
+  }, [inputValue, updateProps]);
   const status = detectingLocation
     ? 'Detecting your location...'
     : weather

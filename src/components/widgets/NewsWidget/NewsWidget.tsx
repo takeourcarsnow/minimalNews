@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import type { NewsItem, ApiResponse } from '@/types/api';
+import { useEffect } from 'react';
+import type { NewsItem } from '@/types/api';
 import TerminalBox from '@/components/ui/TerminalBox';
 import TerminalList from '@/components/ui/TerminalList';
+import { useWidgetData, useWidgetProps } from '@/hooks/useWidget';
 import styles from './NewsWidget.module.css';
 
 const CATEGORIES = ['all', 'technology', 'business', 'science', 'health', 'politics'];
@@ -13,55 +14,23 @@ interface NewsWidgetProps {
 }
 
 export default function NewsWidget({ category: initialCategory = 'all' }: NewsWidgetProps) {
-  const [news, setNews] = useState<NewsItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [category, setCategory] = useState(initialCategory);
+  const { props: { category }, updateProps } = useWidgetProps({ category: initialCategory });
+  const { data: news, loading, error, refetch } = useWidgetData<NewsItem[]>(
+    `/api/news?category=${category}&limit=10`,
+    [category]
+  );
 
   useEffect(() => {
-    setCategory(initialCategory);
+    if (initialCategory !== category) {
+      updateProps({ category: initialCategory });
+    }
   }, [initialCategory]);
 
-  useEffect(() => {
-    fetchNews();
-  }, [category]);
+  const handleCategoryChange = (newCategory: string) => {
+    updateProps({ category: newCategory });
+  };
 
-  async function fetchNews() {
-    setLoading(true);
-    setError(null);
-
-    try {
-      console.log('Fetching news for category:', category);
-      const response = await fetch(`/api/news?category=${category}&limit=10`);
-      console.log('News API response status:', response.status);
-
-      // Treat only an explicit `ok === false` as an HTTP error. Some tests mock `fetch`
-      // with a simple object that doesn't include `ok`, `status` or `statusText`.
-      if (response.ok === false) {
-        throw new Error(`HTTP ${response.status ?? 'unknown'}: ${response.statusText ?? ''}`);
-      }
-
-      const result: ApiResponse<NewsItem[]> = await response.json();
-      console.log('News API result:', result);
-
-      if (result.data) {
-        setNews(result.data);
-        console.log('Set news data:', result.data.length, 'items');
-      }
-      if (result.error) {
-        setError(result.error);
-        console.error('News API error:', result.error);
-      }
-    } catch (err) {
-      // Prefer a generic message for UI display on network failures to match tests
-      setError('Failed to fetch news');
-      console.error('News fetch error:', err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const listItems = news.map((item) => ({
+  const listItems = (news || []).map((item) => ({
     id: item.id,
     content: (
       <div className={styles.newsItem}>
@@ -79,7 +48,7 @@ export default function NewsWidget({ category: initialCategory = 'all' }: NewsWi
     <TerminalBox
       title="news --headlines"
       icon="📰"
-      status={`${news.length} articles`}
+      status={`${news?.length || 0} articles`}
       loading={loading}
       error={loading ? null : error}
     >
@@ -88,7 +57,7 @@ export default function NewsWidget({ category: initialCategory = 'all' }: NewsWi
           {CATEGORIES.map((cat) => (
             <button
               key={cat}
-              onClick={() => setCategory(cat)}
+              onClick={() => handleCategoryChange(cat)}
               className={`${styles.categoryBtn} ${category === cat ? styles.active : ''}`}
             >
               [{cat}]

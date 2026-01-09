@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useTheme } from '@/context/ThemeContext';
+import { commandUtils } from '@/utils/commands';
 import TypingAnimation from '@/components/ui/TypingAnimation';
 import styles from './CommandLine.module.css';
 
@@ -83,72 +84,35 @@ export default function CommandLine({ isOpen, onClose, onCommand }: CommandLineP
     const loadingId = addToHistory('', 'Loading...', 'loading');
 
     try {
-      if (command === 'weather') {
-        const location = args.join(' ');
-        const res = await fetch(`/api/weather?location=${encodeURIComponent(location)}`);
-        const json = await res.json();
-        const weather = json?.data;
-        if (weather) {
-          const out = `Location: ${weather.location}\n${weather.current.temp}°C - ${weather.current.condition}\nLast updated: ${new Date(weather.lastUpdated).toLocaleString()}`;
-          updateHistory(loadingId, out, 'success');
-          // Propagate to widget
-          onCommand('weather', args);
-        } else {
-          updateHistory(loadingId, 'No weather data available', 'error');
-        }
-      } else if (command === 'news') {
-        const category = args[0] || 'general';
-        const res = await fetch(`/api/news?category=${encodeURIComponent(category)}&limit=5`);
-        const json = await res.json();
-        const items = json?.data || [];
-        if (items.length) {
-          const out = items.map((it: any, idx: number) => `${idx + 1}. ${it.title}`).join('\n');
-          updateHistory(loadingId, `Top ${items.length} ${category} headlines:\n${out}`, 'success');
-        } else {
-          updateHistory(loadingId, `No ${category} news available`, 'info');
-        }
-      } else if (command === 'hackernews') {
-        const res = await fetch(`/api/hackernews`);
-        const json = await res.json();
-        const items = json?.data || [];
-        if (items.length) {
-          const out = items.slice(0,5).map((it: any, idx: number) => `${idx + 1}. ${it.title}`).join('\n');
-          updateHistory(loadingId, `Top Hacker News:\n${out}`, 'success');
-        } else {
-          updateHistory(loadingId, 'No hackernews data', 'info');
-        }
-      } else if (command === 'trending') {
-        const res = await fetch(`/api/trending`);
-        const json = await res.json();
-        const data = json?.data || {};
-        const github = data.github || [];
-        if (github.length) {
-          const out = github.slice(0,5).map((g: any, idx: number) => `${idx + 1}. ${g.name} (${g.stars} ★)`).join('\n');
-          updateHistory(loadingId, `Trending repos:\n${out}`, 'success');
-        } else {
-          updateHistory(loadingId, 'No trending data', 'info');
-        }
-      } else if (command === 'quote') {
-        const res = await fetch(`/api/quote`);
-        const json = await res.json();
-        const q = json?.data;
-        if (q) {
-          updateHistory(loadingId, `${q.text}\n— ${q.author || 'Unknown'}`, 'success');
-        } else {
-          updateHistory(loadingId, 'No quote available', 'info');
-        }
-      } else if (command === 'reddit') {
-        const subreddit = args[0] || 'all';
-        const res = await fetch(`/api/reddit?subreddit=${encodeURIComponent(subreddit)}&limit=5`);
-        const json = await res.json();
-        const items = json?.data || [];
-        if (items.length) {
-          const out = items.map((it: any, idx: number) => `${idx + 1}. ${it.title}`).join('\n');
-          updateHistory(loadingId, `Top posts from r/${subreddit}:\n${out}`, 'success');
-        } else {
-          updateHistory(loadingId, `No posts from r/${subreddit}`, 'info');
-        }
+      let result: string;
+
+      switch (command) {
+        case 'weather':
+          result = await commandUtils.fetchWeather(args.join(' '));
+          break;
+        case 'news':
+          result = await commandUtils.fetchNews(args[0] || 'general');
+          break;
+        case 'hackernews':
+          result = await commandUtils.fetchHackerNews();
+          break;
+        case 'trending':
+          result = await commandUtils.fetchTrending();
+          break;
+        case 'quote':
+          result = await commandUtils.fetchQuote();
+          break;
+        case 'reddit':
+          result = await commandUtils.fetchReddit(args[0] || 'all');
+          break;
+        default:
+          updateHistory(loadingId, `Unknown command: ${command}`, 'error');
+          return;
       }
+
+      updateHistory(loadingId, result, 'success');
+      // Propagate to widget
+      onCommand(command, args);
     } catch (err) {
       updateHistory(loadingId, `Error fetching ${command}: ${(err as Error).message}`, 'error');
     }

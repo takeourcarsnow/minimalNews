@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import type { HackerNewsItem, ApiResponse } from '@/types/api';
+import { useState } from 'react';
+import type { HackerNewsItem } from '@/types/api';
 import TerminalBox from '@/components/ui/TerminalBox';
+import { useWidgetData } from '@/hooks/useWidget';
 import styles from './HackerNewsWidget.module.css';
 
 const STORY_TYPES = ['top', 'new', 'best', 'ask', 'show'];
@@ -34,41 +35,17 @@ function getDomain(url: string): string {
 }
 
 export default function HackerNewsWidget() {
-  const [stories, setStories] = useState<HackerNewsItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [storyType, setStoryType] = useState('top');
-
-  useEffect(() => {
-    fetchStories();
-  }, [storyType]);
-
-  async function fetchStories() {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(`/api/hackernews?type=${storyType}&limit=15`);
-      const result: ApiResponse<HackerNewsItem[]> = await response.json();
-
-      if (result.data) {
-        setStories(result.data);
-      }
-      if (result.error) {
-        setError(result.error);
-      }
-    } catch (err) {
-      setError('Failed to fetch HackerNews stories');
-    } finally {
-      setLoading(false);
-    }
-  }
+  const { data: stories, loading, error } = useWidgetData<HackerNewsItem[]>(
+    `/api/hackernews?type=${storyType}&limit=15`,
+    [storyType]
+  );
 
   return (
     <TerminalBox
       title="hackernews --stories"
       icon="🔶"
-      status={`${stories.length} stories`}
+      status={`${stories?.length || 0} stories`}
       loading={loading}
       error={loading ? null : error}
     >
@@ -95,7 +72,7 @@ export default function HackerNewsWidget() {
             </tr>
           </thead>
           <tbody>
-            {stories.map((story, index) => (
+            {(stories || []).map((story, index) => (
               <tr key={story.id} className={styles.row}>
                 <td className={styles.rank}>{index + 1}</td>
                 <td className={styles.score}>{formatScore(story.score)}</td>

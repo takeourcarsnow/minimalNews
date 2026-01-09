@@ -42,29 +42,22 @@ export function WidgetProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const executeCommand = useCallback((command: string, args: string[]) => {
-    switch (command) {
-      case 'weather':
-        updateWidgetProps('weather', { defaultLocation: args.join(' ') || 'New York' });
-        // Trigger refresh for weather widget
+    const commandMap: Record<string, (args: string[]) => void> = {
+      weather: (args) => updateWidgetProps('weather', { defaultLocation: args.join(' ') || 'New York' }),
+      news: (args) => updateWidgetProps('news', { category: args[0] || 'general' }),
+      reddit: (args) => updateWidgetProps('reddit', { subreddit: args[0] || 'all' }),
+      hackernews: () => {},
+      trending: () => {},
+      quote: () => {},
+    };
+
+    const action = commandMap[command];
+    if (action) {
+      action(args);
+      // Trigger refresh for widgets that need it
+      if (['weather', 'news', 'reddit', 'hackernews', 'trending', 'quote'].includes(command)) {
         setRefreshKey(prev => prev + 1);
-        break;
-      case 'news':
-        updateWidgetProps('news', { category: args[0] || 'general' });
-        setRefreshKey(prev => prev + 1);
-        break;
-      case 'reddit':
-        updateWidgetProps('reddit', { subreddit: args[0] || 'all' });
-        setRefreshKey(prev => prev + 1);
-        break;
-      case 'hackernews':
-        setRefreshKey(prev => prev + 1);
-        break;
-      case 'trending':
-        setRefreshKey(prev => prev + 1);
-        break;
-      case 'quote':
-        setRefreshKey(prev => prev + 1);
-        break;
+      }
     }
   }, [updateWidgetProps]);
 

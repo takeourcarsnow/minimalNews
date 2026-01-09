@@ -129,8 +129,6 @@ export async function GET(request: Request) {
   try {
     let allNews = await fetchFromRSSFeeds(category);
 
-
-
     // Filter by category using keyword matching on title/source
     let filteredNews = allNews;
     if (category !== 'general') {
