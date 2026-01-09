@@ -1,3 +1,5 @@
+'use client';
+
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import ClockWidget from '@/components/widgets/ClockWidget';
 import styles from './Header.module.css';
