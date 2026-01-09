@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import styles from './TypingAnimation.module.css';
 
 interface TypingAnimationProps {
@@ -23,43 +23,49 @@ export default function TypingAnimation({
   const [displayText, setDisplayText] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
+  const [started, setStarted] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setDisplayText('');
+    setCurrentIndex(0);
+    setIsComplete(false);
+    setStarted(false);
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, [text]);
 
   useEffect(() => {
     if (delay > 0) {
       const delayTimer = setTimeout(() => {
-        startTyping();
+        setStarted(true);
       }, delay);
       return () => clearTimeout(delayTimer);
     } else {
-      startTyping();
+      setStarted(true);
     }
   }, [text, delay]);
 
-  const startTyping = () => {
-    if (currentIndex < text.length) {
-      const timer = setTimeout(() => {
-        setDisplayText((prev) => prev + text[currentIndex]);
-        setCurrentIndex((prev) => prev + 1);
-      }, speed);
-      return () => clearTimeout(timer);
-    } else {
-      setIsComplete(true);
-      onComplete?.();
-    }
-  };
-
   useEffect(() => {
-    if (currentIndex < text.length) {
-      const timer = setTimeout(() => {
+    if (started && currentIndex < text.length && !timerRef.current) {
+      timerRef.current = setTimeout(() => {
         setDisplayText((prev) => prev + text[currentIndex]);
         setCurrentIndex((prev) => prev + 1);
+        timerRef.current = null;
       }, speed);
-      return () => clearTimeout(timer);
-    } else {
+    } else if (started && currentIndex >= text.length && !isComplete) {
       setIsComplete(true);
       onComplete?.();
     }
-  }, [currentIndex, text, speed, onComplete]);
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [started, currentIndex, text, speed, onComplete, isComplete]);
 
   return (
     <span className={`${styles.typing} ${className}`}>

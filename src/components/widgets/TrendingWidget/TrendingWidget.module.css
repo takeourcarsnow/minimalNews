@@ -69,6 +69,12 @@
 .hashtag {
   color: var(--info);
   font-weight: bold;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.hashtag:hover {
+  color: var(--primary);
 }
 
 .category {

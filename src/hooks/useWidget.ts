@@ -56,11 +56,5 @@ export function useWidgetProps<T extends Record<string, any>>(
     });
   }, [onPropsChange]);
 
-  useEffect(() => {
-    if (initialProps && Object.keys(initialProps).length > 0) {
-      setProps(initialProps);
-    }
-  }, [initialProps]);
-
   return { props, updateProps };
 }

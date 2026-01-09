@@ -47,7 +47,11 @@ export default function Home() {
   const [widgetOrder, setWidgetOrder] = useState(widgets.map(w => w.id));
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 10,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })

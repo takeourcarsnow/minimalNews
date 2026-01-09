@@ -77,7 +77,14 @@ export default function TrendingWidget() {
                 <li key={topic.id} className={styles.item}>
                   <span className={styles.index}>{index + 1}</span>
                   <div className={styles.content}>
-                    <span className={styles.hashtag}>{topic.name}</span>
+                    <a
+                      href={`https://x.com/hashtag/${topic.name.replace('#', '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.hashtag}
+                    >
+                      {topic.name}
+                    </a>
                     <span className={styles.category}>{topic.category}</span>
                   </div>
                   {topic.volume && (

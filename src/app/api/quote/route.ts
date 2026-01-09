@@ -35,14 +35,9 @@ const quotes: QuoteOfTheDay[] = [
 ];
 
 export async function GET() {
-  // Get a quote based on the day of the year for consistency
-  const now = new Date();
-  const start = new Date(now.getFullYear(), 0, 0);
-  const diff = now.getTime() - start.getTime();
-  const oneDay = 1000 * 60 * 60 * 24;
-  const dayOfYear = Math.floor(diff / oneDay);
-  
-  const quote = quotes[dayOfYear % quotes.length];
+  // Get a random quote
+  const randomIndex = Math.floor(Math.random() * quotes.length);
+  const quote = quotes[randomIndex];
 
   const result: ApiResponse<QuoteOfTheDay> = {
     data: quote,

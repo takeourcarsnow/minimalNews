@@ -33,6 +33,9 @@ export default function QuoteWidget() {
         <span className={styles.mark}>"</span>
       </div>
       <div className={styles.author}>— {quote.author}</div>
+      <button onClick={fetchQuote} className={styles.refreshButton}>
+        New Quote
+      </button>
     </div>
   );
 }
