@@ -2,6 +2,8 @@
   display: flex;
   gap: 1rem;
   align-items: flex-start;
+  /* Allow the container to shrink inside grid columns */
+  min-width: 0;
 }
 
 .ascii {
@@ -9,6 +11,12 @@
   color: var(--color-green);
   white-space: pre;
   line-height: 1.2;
+  /* ensure ASCII art isn't visually cut off */
+  padding-left: 0.3rem;
+  /* Fix a reserved column width so ascii doesn't push the rest off screen on small viewports */
+  flex: 0 0 120px;
+  max-width: 33%;
+  box-sizing: border-box;
 }
 
 .info {
@@ -17,8 +25,24 @@
   gap: 0.25rem;
   font-family: var(--font-mono);
   font-size: 0.9rem;
+  /* allow contents to wrap and shrink properly */
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
+@media (max-width: 600px) {
+  /* Stack ascii above info on narrow screens */
+  .container {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .ascii {
+    flex: 0 0 auto;
+    max-width: none;
+    padding-left: 0;
+  }
+}
 .infoLine {
   display: flex;
 }
@@ -30,4 +54,6 @@
 
 .value {
   color: var(--color-text);
+  word-break: break-word;
+  white-space: normal;
 }

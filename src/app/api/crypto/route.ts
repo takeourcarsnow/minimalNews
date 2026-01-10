@@ -93,22 +93,34 @@ export async function GET(request: Request) {
 
     let priceData: Record<string, any> = {};
     if (idsToQuery.length > 0) {
-      const url = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(idsToQuery.join(','))}&vs_currencies=usd&include_24hr_change=true`;
+      // Use the markets endpoint to get price and percent changes for 24h, 7d and 30d in one request
+      const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${encodeURIComponent(idsToQuery.join(','))}&price_change_percentage=24h,7d,30d`;
       const r = await fetch(url);
       if (r.ok) {
-        priceData = await r.json();
+        const list = await r.json();
+        list.forEach((item: any) => {
+          priceData[item.id] = {
+            usd: item.current_price,
+            usd_24h_change: item.price_change_percentage_24h_in_currency,
+            change1w: item.price_change_percentage_7d_in_currency,
+            change1m: item.price_change_percentage_30d_in_currency,
+            last_updated_at: item.last_updated,
+          };
+        });
       }
     }
 
     const results = tokens.map((token) => {
       const id = tokenToId[token];
       if (!id) return null;
-      const pd = priceData[id];
+      const pd = priceData[id] || {};
       return {
         id: token,
-        usd: pd?.usd || 0,
-        usd_24h_change: pd?.usd_24h_change || 0,
-        last_updated_at: new Date().toISOString(),
+        usd: pd?.usd ?? 0,
+        usd_24h_change: typeof pd?.usd_24h_change === 'number' ? pd.usd_24h_change : 0,
+        change1w: typeof pd?.change1w === 'number' ? pd.change1w : undefined,
+        change1m: typeof pd?.change1m === 'number' ? pd.change1m : undefined,
+        last_updated_at: pd?.last_updated_at || new Date().toISOString(),
       };
     });
 

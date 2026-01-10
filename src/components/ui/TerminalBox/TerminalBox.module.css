@@ -2,6 +2,10 @@
   border: 1px solid var(--border);
   background-color: var(--bg);
   margin-bottom: var(--spacing-md);
+  /* Make sure the box will expand to available column width and allow inner elements to shrink */
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .header {

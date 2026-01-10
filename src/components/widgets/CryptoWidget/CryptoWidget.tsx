@@ -191,6 +191,8 @@ export default function CryptoWidget() {
       return {
         price: typeof info?.usd === 'number' ? info.usd : undefined,
         change: typeof info?.usd_24h_change === 'number' ? info.usd_24h_change : undefined,
+        change1w: typeof info?.change1w === 'number' ? info.change1w : undefined,
+        change1m: typeof info?.change1m === 'number' ? info.change1m : undefined,
       };
     } else {
       const raw = data?.data;
@@ -215,7 +217,7 @@ export default function CryptoWidget() {
   };
 
   return (
-    <TerminalBox title={`${mode} --prices ${mode === 'stocks' ? `[${selectedPeriods.join(',')}]` : ''}`} icon="💱" status={data ? `Updated: ${new Date().toLocaleTimeString()}` : ''} loading={loading} error={loading ? null : error}>
+    <TerminalBox title={`${mode} --prices [${selectedPeriods.join(',')}]`} icon="💱" status={data ? `Updated: ${new Date().toLocaleTimeString()}` : ''} loading={loading} error={loading ? null : error}>
       <div className={styles.container}>
         <div className={styles.headerLine}>
           $ {symbols.join(', ')}
@@ -294,6 +296,21 @@ export default function CryptoWidget() {
               <span className={styles.helperText} onClick={() => cryptoInputRef?.current?.focus()}>{addHelperTextCrypto}</span>
               {notice && <span className={styles.notice}>{notice}</span>}
             </div>
+
+            <div className={styles.periods}>
+              {AVAILABLE_PERIODS.map(p => (
+                <label key={p} className={styles.periodLabel}>
+                  <input
+                    type="checkbox"
+                    checked={selectedPeriods.includes(p)}
+                    onChange={(e) => {
+                      if (e.target.checked) setSelectedPeriods([...selectedPeriods, p]);
+                      else setSelectedPeriods(selectedPeriods.filter(x => x !== p));
+                    }}
+                  /> {p}
+                </label>
+              ))}
+            </div>
           </div>
         )}
 
@@ -312,7 +329,7 @@ export default function CryptoWidget() {
                     </span>
                   </div>
                 )}
-                {mode === 'stocks' && (
+                {(selectedPeriods.includes('1w') || selectedPeriods.includes('1m')) && (
                   <div className={styles.extraChanges}>
                     {selectedPeriods.includes('1w') && (
                       <div className={styles.periodValue}>

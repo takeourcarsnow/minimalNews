@@ -12,7 +12,9 @@
 .name { color: var(--primary); font-family: var(--font-mono); }
 .comp { color: var(--muted); margin-left: auto; }
 .reorder { display: flex; gap: 0.25rem; margin-left: 0.5rem; }
-.smallBtn { background: transparent; border: 1px solid var(--border); padding: 0 0.35rem; cursor: pointer; font-size: 0.85rem; }
-.smallBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+.smallBtn { background: transparent; border: 1px solid var(--border); color: var(--fg); padding: 0 0.35rem; cursor: pointer; font-size: 0.85rem; }
+.smallBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+.smallBtn:hover:not(:disabled) { background: rgba(255,255,255,0.02); }
 .footer { display: flex; justify-content: flex-end; margin-top: var(--spacing-md); }
-.close { padding: var(--spacing-xs) var(--spacing-sm); border: 1px solid var(--border); background: transparent; cursor: pointer; }
+.close { padding: var(--spacing-xs) var(--spacing-sm); border: 1px solid var(--border); background: transparent; cursor: pointer; color: var(--fg); }
+.close:hover { background: rgba(255,255,255,0.02); }
