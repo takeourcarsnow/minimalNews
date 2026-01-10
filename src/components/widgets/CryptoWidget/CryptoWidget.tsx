@@ -304,19 +304,30 @@ export default function CryptoWidget() {
               <div key={s} className={styles.row}>
                 <div className={styles.symbol}>{s}</div>
                 <div className={styles.price}>{price ? `$${price.toFixed(2)}` : '—'}</div>
-                <div className={change != null ? (change >= 0 ? styles.changeUp : styles.changeDown) : ''}>
-                  {change != null ? formatChange(change) : ''}
-                </div>
+                {selectedPeriods.includes('1d') && (
+                  <div className={styles.periodValue}>
+                    <span className={styles.periodTag}>1d</span>
+                    <span className={change != null ? (change >= 0 ? styles.changeUp : styles.changeDown) : ''}>
+                      {change != null ? formatChange(change) : ''}
+                    </span>
+                  </div>
+                )}
                 {mode === 'stocks' && (
                   <div className={styles.extraChanges}>
                     {selectedPeriods.includes('1w') && (
-                      <div className={change1w != null ? (change1w >= 0 ? styles.changeUpSmall : styles.changeDownSmall) : ''}>
-                        {change1w != null ? formatChange(change1w) : ''}
+                      <div className={styles.periodValue}>
+                        <span className={styles.periodTag}>1w</span>
+                        <span className={change1w != null ? (change1w >= 0 ? styles.changeUpSmall : styles.changeDownSmall) : ''}>
+                          {change1w != null ? formatChange(change1w) : ''}
+                        </span>
                       </div>
                     )}
                     {selectedPeriods.includes('1m') && (
-                      <div className={change1m != null ? (change1m >= 0 ? styles.changeUpSmall : styles.changeDownSmall) : ''}>
-                        {change1m != null ? formatChange(change1m) : ''}
+                      <div className={styles.periodValue}>
+                        <span className={styles.periodTag}>1m</span>
+                        <span className={change1m != null ? (change1m >= 0 ? styles.changeUpSmall : styles.changeDownSmall) : ''}>
+                          {change1m != null ? formatChange(change1m) : ''}
+                        </span>
                       </div>
                     )}
                   </div>

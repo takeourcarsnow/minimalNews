@@ -71,11 +71,17 @@
   display: flex;
   gap: var(--spacing-sm);
   align-items: center;
+  /* Keep all period controls on a single line */
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .periodLabel {
   font-family: var(--font-mono);
   font-size: 0.8rem;
+  /* Prevent label text from wrapping so the checkbox + label stays together */
+  white-space: nowrap;
 }
 
 /* Row layout changed to grid for consistent alignment */
@@ -148,11 +154,30 @@
 
 .extraChanges {
   display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
+  flex-direction: row;
+  gap: 0.6rem;
   margin-right: 0.5rem;
-  min-width: 4.5rem;
-  align-items: flex-end;
+  min-width: 9rem;
+  align-items: center;
+  justify-content: flex-end;
+  /* prevent percentages from wrapping and keep label + value together */
+  white-space: nowrap;
+}
+
+.periodValue {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.periodTag {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  opacity: 0.9;
+  width: 22px;
+  text-align: right;
 }
 
 .changeUpSmall {
