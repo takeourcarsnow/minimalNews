@@ -35,7 +35,11 @@ export function useWidgetData<T>(
   }, [apiUrl, options?.transformData]);
 
   useEffect(() => {
-    fetchData();
+    if (apiUrl) {
+      fetchData();
+    } else {
+      setLoading(false);
+    }
   }, deps);
 
   return { data, loading, error, refetch: fetchData };

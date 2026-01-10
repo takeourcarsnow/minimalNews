@@ -129,6 +129,10 @@ export async function GET(request: Request) {
   try {
     let allNews = await fetchFromRSSFeeds(category);
 
+    if (allNews.length === 0) {
+      throw new Error('No news feeds available');
+    }
+
     // Filter by category using keyword matching on title/source
     let filteredNews = allNews;
     if (category !== 'general') {

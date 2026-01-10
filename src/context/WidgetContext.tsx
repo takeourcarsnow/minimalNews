@@ -20,7 +20,7 @@ const WidgetContext = createContext<WidgetContextType | undefined>(undefined);
 
 const DEFAULT_WIDGETS: WidgetConfig[] = [
   { id: 'quote', component: 'QuoteWidget' },
-  { id: 'weather', component: 'WeatherWidget', props: { defaultLocation: 'New York' } },
+  { id: 'weather', component: 'WeatherWidget' },
   { id: 'trending', component: 'TrendingWidget' },
   { id: 'hackernews', component: 'HackerNewsWidget' },
   { id: 'news', component: 'NewsWidget' },

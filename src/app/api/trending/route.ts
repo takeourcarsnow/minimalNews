@@ -41,7 +41,7 @@ async function fetchGitHubTrending(): Promise<SocialTrending['github']> {
     return repos;
   } catch (error) {
     console.error('GitHub trending error:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -123,7 +123,7 @@ async function fetchTwitterTrending(): Promise<SocialTrending['twitter']> {
     return trends;
   } catch (error) {
     console.error('Twitter trending error:', error);
-    return [];
+    throw error;
   }
 }
 

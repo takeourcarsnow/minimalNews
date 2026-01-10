@@ -28,7 +28,30 @@ function getWindDirection(degrees: number): string {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const location = searchParams.get('location') || 'New York';
+  let location = searchParams.get('location');
+
+  if (!location) {
+    // Try IP-based geolocation as fallback
+    const forwarded = request.headers.get('x-forwarded-for');
+    const realIp = request.headers.get('x-real-ip');
+    const ip = forwarded ? forwarded.split(',')[0] : realIp || '127.0.0.1';
+
+    try {
+      const ipRes = await fetch(`https://ipapi.co/${ip}/json/`);
+      if (ipRes.ok) {
+        const ipData = await ipRes.json();
+        if (ipData.city && ipData.region) {
+          location = `${ipData.city}, ${ipData.region}`;
+        }
+      }
+    } catch (e) {
+      console.warn('IP geolocation failed:', e);
+    }
+  }
+
+  if (!location) {
+    throw new Error('Unable to determine location');
+  }
 
   try {
     let lat: number, lon: number, locationName: string;

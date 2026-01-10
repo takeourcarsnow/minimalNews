@@ -39,6 +39,10 @@ export async function GET(request: Request) {
         };
       });
 
+    if (posts.length === 0) {
+      throw new Error('No Reddit posts available');
+    }
+
     const result: ApiResponse<RedditPost[]> = {
       data: posts,
       error: null,

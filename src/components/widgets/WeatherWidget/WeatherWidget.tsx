@@ -7,7 +7,6 @@ import { useWidgetData, useWidgetProps } from '@/hooks/useWidget';
 import styles from './WeatherWidget.module.css';
 
 interface WeatherWidgetProps {
-  defaultLocation?: string;
 }
 
 const WEATHER_ASCII: Record<string, string> = {
@@ -88,27 +87,24 @@ function formatDate(dateStr: string): string {
   return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
-export default function WeatherWidget({ defaultLocation = 'New York' }: WeatherWidgetProps) {
-  const { props: { location }, updateProps } = useWidgetProps({ location: defaultLocation });
-  const [inputValue, setInputValue] = useState(defaultLocation);
+export default function WeatherWidget() {
+  const { props: { location }, updateProps } = useWidgetProps({} as { location?: string });
+  const [inputValue, setInputValue] = useState('');
   const [locationDetected, setLocationDetected] = useState(false);
   const [detectingLocation, setDetectingLocation] = useState(true);
 
   const { data: weather, loading, error, refetch } = useWidgetData<WeatherData>(
-    `/api/weather?location=${encodeURIComponent(location)}`,
+    `/api/weather${location ? `?location=${encodeURIComponent(location)}` : ''}`,
     [location],
     { initialData: null }
   );
 
-  // React to prop updates from CLI or other actions so the widget updates immediately
+  // Update input value when location changes
   useEffect(() => {
-    if (defaultLocation && defaultLocation !== location && !locationDetected) {
-      updateProps({ location: defaultLocation });
-      setInputValue(defaultLocation);
+    if (location) {
+      setInputValue(location);
     }
-  }, [defaultLocation, location, updateProps, locationDetected]);
-
-  // Detect user's location on mount
+  }, [location]);
   useEffect(() => {
     if (!locationDetected && detectingLocation) {
       // Use browser's geolocation API (most reliable, no CORS issues)
@@ -156,7 +152,7 @@ export default function WeatherWidget({ defaultLocation = 'New York' }: WeatherW
           },
           (error) => {
             console.warn('Geolocation error:', error.message);
-            // Keep default location if geolocation fails or is denied
+            // Keep current location (which may be from IP geolocation)
             setLocationDetected(true);
             setDetectingLocation(false);
           },

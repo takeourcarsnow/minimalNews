@@ -44,6 +44,10 @@ export async function GET(request: Request) {
         type: item.type,
       }));
 
+    if (hnItems.length === 0) {
+      throw new Error('No HackerNews items available');
+    }
+
     const result: ApiResponse<HackerNewsItem[]> = {
       data: hnItems,
       error: null,
