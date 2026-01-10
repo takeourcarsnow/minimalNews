@@ -22,11 +22,6 @@ export default function TerminalBox({
   return (
     <div className={styles.box}>
       <div className={styles.header}>
-        <div className={styles.dots}>
-          <span className={`${styles.dot} ${styles.red}`}></span>
-          <span className={`${styles.dot} ${styles.yellow}`}></span>
-          <span className={`${styles.dot} ${styles.green}`}></span>
-        </div>
         <div className={styles.title}>
           <span className={styles.icon}>{icon}</span>
           <span>{title}</span>

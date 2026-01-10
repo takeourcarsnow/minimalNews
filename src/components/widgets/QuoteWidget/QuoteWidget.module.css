@@ -26,19 +26,20 @@
   font-size: var(--font-size-sm);
 }
 
-.refreshButton {
-  margin-top: var(--spacing-md);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background-color: var(--bg);
+.button {
+  background: transparent;
   border: 1px solid var(--border);
-  color: var(--fg);
+  color: var(--primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
   cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: var(--spacing-md);
   border-radius: var(--border-radius);
-  font-size: var(--font-size-sm);
-  transition: background-color 0.2s;
 }
 
-.refreshButton:hover {
-  background-color: var(--primary);
+.button:hover {
+  background: var(--border);
   color: var(--bg);
 }

@@ -123,82 +123,84 @@ export default function CommandLine({ isOpen, onClose, onCommand }: CommandLineP
     const cmd = parts[0].toLowerCase();
     const args = parts.slice(1);
 
+    // Return an object with the immediate output text and, if applicable,
+    // details about an async command to run after the command is added to history.
     switch (cmd) {
       case 'help':
-        return COMMANDS.join('\n');
+        return { output: COMMANDS.join('\n') };
 
       case 'weather':
         if (args.length === 0) {
-          return 'Usage: weather [location]\nExample: weather New York';
+          return { output: 'Usage: weather [location]\nExample: weather New York' };
         }
-        onCommand('weather', args);
-        runAsyncCommand('weather', args);
-        return `Fetching weather for ${args.join(' ')}...`;
+        return { output: `Fetching weather for ${args.join(' ')}...`, async: { command: 'weather', args } };
 
       case 'news':
-        const category = args[0] || 'general';
-        onCommand('news', [category]);
-        runAsyncCommand('news', [category]);
-        return `Fetching ${category} news...`;
+        {
+          const category = args[0] || 'general';
+          return { output: `Fetching ${category} news...`, async: { command: 'news', args: [category] } };
+        }
 
       case 'reddit':
-        const subreddit = args[0] || 'all';
-        onCommand('reddit', [subreddit]);
-        runAsyncCommand('reddit', [subreddit]);
-        return `Fetching posts from r/${subreddit}...`;
+        {
+          const subreddit = args[0] || 'all';
+          return { output: `Fetching posts from r/${subreddit}...`, async: { command: 'reddit', args: [subreddit] } };
+        }
 
       case 'hackernews':
-        onCommand('hackernews', []);
-        runAsyncCommand('hackernews', []);
-        return 'Fetching Hacker News top stories...';
+        return { output: 'Fetching Hacker News top stories...', async: { command: 'hackernews', args: [] } };
 
       case 'trending':
-        onCommand('trending', []);
-        runAsyncCommand('trending', []);
-        return 'Fetching trending topics...';
+        return { output: 'Fetching trending topics...', async: { command: 'trending', args: [] } };
 
       case 'quote':
-        onCommand('quote', []);
-        runAsyncCommand('quote', []);
-        return 'Fetching random quote...';
+        return { output: 'Fetching random quote...', async: { command: 'quote', args: [] } };
 
       case 'theme':
         if (args.length === 0) {
-          return `Current theme: ${theme}\nAvailable themes: ${availableThemes.join(', ')}`;
+          return { output: `Current theme: ${theme}\nAvailable themes: ${availableThemes.join(', ')}` };
         }
-        const newTheme = args[0];
-        if (availableThemes.includes(newTheme as any)) {
-          setTheme(newTheme as any);
-          return `Theme changed to ${newTheme}`;
+        {
+          const newTheme = args[0];
+          if (availableThemes.includes(newTheme as any)) {
+            setTheme(newTheme as any);
+            return { output: `Theme changed to ${newTheme}` };
+          }
+          return { output: `Invalid theme. Available: ${availableThemes.join(', ')}` };
         }
-        return `Invalid theme. Available: ${availableThemes.join(', ')}`;
 
       case 'clear':
         setHistory([]);
-        return '';
+        return { output: '' };
 
       case 'exit':
         onClose();
-        return 'Goodbye!';
+        return { output: 'Goodbye!' };
 
       default:
-        return `Command not found: ${cmd}. Type "help" for available commands.`;
+        return { output: `Command not found: ${cmd}. Type "help" for available commands.` };
     }
-  }, [theme, setTheme, availableThemes, onCommand, onClose]);
+  }, [theme, setTheme, availableThemes, onClose, setHistory]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
 
     const command = input.trim();
-    const output = parseCommand(command);
+    const result = parseCommand(command);
 
-    if (output) {
-      addToHistory(command, output);
+    if (result.output) {
+      addToHistory(command, result.output);
     }
 
     setInput('');
     setCurrentLine(history.length + 1);
+
+    if (result.async) {
+      // Notify widgets and start async work AFTER adding the command to history
+      onCommand(result.async.command, result.async.args);
+      runAsyncCommand(result.async.command, result.async.args);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -213,11 +215,6 @@ export default function CommandLine({ isOpen, onClose, onCommand }: CommandLineP
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <div className={styles.dots}>
-            <span className={`${styles.dot} ${styles.red}`}></span>
-            <span className={`${styles.dot} ${styles.yellow}`}></span>
-            <span className={`${styles.dot} ${styles.green}`}></span>
-          </div>
           <div className={styles.title}>
             <span className={styles.icon}>▸</span>
             <span>Terminal CLI</span>
