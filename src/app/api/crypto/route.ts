@@ -70,7 +70,6 @@ export async function GET(request: Request) {
       internetcomputer: 'internet-computer',
       icp: 'internet-computer',
       theta: 'theta-token',
-      theta: 'theta-token',
       elrond: 'elrond-erd-2',
       egld: 'elrond-erd-2',
       hedera: 'hedera-hashgraph',

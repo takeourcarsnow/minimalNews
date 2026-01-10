@@ -58,7 +58,7 @@ export async function GET(request: Request) {
 
     const result: ApiResponse<RedditPost[]> = {
       data: null,
-      error: 'Unable to fetch Reddit data. Please try again later.',
+      error: `Unable to fetch Reddit data: ${(error as Error).message}`,
       timestamp: new Date().toISOString(),
     };
 

@@ -158,7 +158,7 @@ export async function GET(request: Request) {
 
     const result: ApiResponse<WeatherData> = {
       data: null,
-      error: 'Unable to fetch weather data. Please try again later.',
+      error: `Unable to fetch weather data: ${(error as Error).message}`,
       timestamp: new Date().toISOString(),
     };
 
