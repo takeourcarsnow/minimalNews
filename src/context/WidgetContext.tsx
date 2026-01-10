@@ -45,23 +45,25 @@ export function WidgetProvider({ children }: { children: ReactNode }) {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const getInitialWidgets = () => {
+    return DEFAULT_WIDGETS;
+  };
+
+  const [widgets, setWidgets] = useState<WidgetConfig[]>(getInitialWidgets);
+
+  useEffect(() => {
     try {
-      if (typeof window === 'undefined') return DEFAULT_WIDGETS;
       const raw = localStorage.getItem('enabledWidgets');
       if (raw) {
         const ids: string[] = JSON.parse(raw);
         const initial = ids
           .map(id => AVAILABLE_WIDGETS.find(w => w.id === id))
           .filter(Boolean) as WidgetConfig[];
-        if (initial.length) return initial;
+        if (initial.length) setWidgets(initial);
       }
     } catch (err) {
       // ignore
     }
-    return DEFAULT_WIDGETS;
-  };
-
-  const [widgets, setWidgets] = useState<WidgetConfig[]>(getInitialWidgets);
+  }, []);
 
   useEffect(() => {
     try {
