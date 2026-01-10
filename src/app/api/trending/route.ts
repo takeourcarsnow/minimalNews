@@ -99,6 +99,10 @@ export async function GET() {
       fetchTwitterTrending(),
     ]);
 
+    if (github.length === 0 || twitter.length === 0) {
+      throw new Error('No trending data available');
+    }
+
     const result: ApiResponse<SocialTrending> = {
       data: {
         github,

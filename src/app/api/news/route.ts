@@ -155,6 +155,10 @@ export async function GET(request: Request) {
       );
     }
 
+    if (filteredNews.length === 0) {
+      throw new Error(`No news available for category: ${category}`);
+    }
+
     const result: ApiResponse<NewsItem[]> = {
       data: filteredNews.slice(0, limit),
       error: null,

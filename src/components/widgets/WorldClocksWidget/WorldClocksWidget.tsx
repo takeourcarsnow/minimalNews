@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import TerminalBox from '@/components/ui/TerminalBox';
 import styles from './WorldClocksWidget.module.css';
 
-const DEFAULT_ZONES = [Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC', 'UTC', 'America/New_York', 'Asia/Tokyo'];
+const DEFAULT_ZONES: string[] = [];
 
 function formatTime(date: Date, timeZone: string) {
   return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone });
@@ -39,13 +39,17 @@ export default function WorldClocksWidget() {
         </div>
 
         <div className={styles.list}>
-          {zones.map((z) => (
-            <div key={z} className={styles.row}>
-              <div className={styles.time}>{formatTime(now, z)}</div>
-              <div className={styles.zone}>{z}</div>
-              <button className={styles.remove} onClick={() => removeZone(z)}>✕</button>
-            </div>
-          ))}
+          {zones.length === 0 ? (
+            <div className={styles.empty}>Add timezones to display clocks</div>
+          ) : (
+            zones.map((z) => (
+              <div key={z} className={styles.row}>
+                <div className={styles.time}>{formatTime(now, z)}</div>
+                <div className={styles.zone}>{z}</div>
+                <button className={styles.remove} onClick={() => removeZone(z)}>✕</button>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </TerminalBox>

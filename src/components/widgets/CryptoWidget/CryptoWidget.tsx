@@ -4,8 +4,8 @@ import { useEffect, useState, useRef } from 'react';
 import TerminalBox from '@/components/ui/TerminalBox';
 import styles from './CryptoWidget.module.css';
 
-const DEFAULT_CRYPTO_SYMBOLS = ['BTC', 'ETH', 'SOL', 'DOGE'];
-const DEFAULT_STOCK_SYMBOLS = ['AAPL', 'MSFT', 'GOOGL', 'TSLA'];
+const DEFAULT_CRYPTO_SYMBOLS: string[] = [];
+const DEFAULT_STOCK_SYMBOLS: string[] = [];
 const CRYPTO_SYMBOL_MAP: Record<string, string> = {
   BTC: 'bitcoin',
   ETH: 'ethereum',
@@ -146,6 +146,13 @@ export default function CryptoWidget() {
     let mounted = true;
 
     async function fetchData() {
+      if (symbols.length === 0) {
+        setLoading(false);
+        setError(null);
+        setData(null);
+        return;
+      }
+
       setLoading(true);
       setError(null);
       try {
@@ -315,57 +322,64 @@ export default function CryptoWidget() {
         )}
 
         <div className={styles.list}>
-          {symbols.map((s) => {
-            const { price, change, change1w, change1m } = getPriceData(s);
-            return (
-              <div key={s} className={styles.row}>
-                <div className={styles.symbol}>{s}</div>
-                <div className={styles.price}>{price ? `$${price.toFixed(2)}` : '—'}</div>
-                {selectedPeriods.includes('1d') && (
-                  <div className={styles.periodValue}>
-                    <span className={styles.periodTag}>1d</span>
-                    <span className={change != null ? (change >= 0 ? styles.changeUp : styles.changeDown) : ''}>
-                      {change != null ? formatChange(change) : ''}
-                    </span>
-                  </div>
-                )}
-                {(selectedPeriods.includes('1w') || selectedPeriods.includes('1m')) && (
-                  <div className={styles.extraChanges}>
-                    {selectedPeriods.includes('1w') && (
-                      <div className={styles.periodValue}>
-                        <span className={styles.periodTag}>1w</span>
-                        <span className={change1w != null ? (change1w >= 0 ? styles.changeUpSmall : styles.changeDownSmall) : ''}>
-                          {change1w != null ? formatChange(change1w) : ''}
-                        </span>
-                      </div>
-                    )}
-                    {selectedPeriods.includes('1m') && (
-                      <div className={styles.periodValue}>
-                        <span className={styles.periodTag}>1m</span>
-                        <span className={change1m != null ? (change1m >= 0 ? styles.changeUpSmall : styles.changeDownSmall) : ''}>
-                          {change1m != null ? formatChange(change1m) : ''}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {mode === 'crypto' && (
-                  <button
-                    className={styles.remove}
-                    onClick={() => handleRemoveCryptoSymbol(s)}
-                    title="Remove crypto"
-                  >×</button>
-                )}
-                {mode === 'stocks' && (
-                  <button
-                    className={styles.remove}
-                    onClick={() => handleRemoveSymbol(s)}
-                    title="Remove symbol"
-                  >×</button>
-                )}
-              </div>
-            );
-          })}
+          {symbols.length === 0 ? (
+            <div className={styles.empty}>Add symbols to track prices</div>
+          ) : (
+            symbols.filter(s => {
+              const { price } = getPriceData(s);
+              return price != null;
+            }).map((s) => {
+              const { price, change, change1w, change1m } = getPriceData(s);
+              return (
+                <div key={s} className={styles.row}>
+                  <div className={styles.symbol}>{s}</div>
+                  <div className={styles.price}>{price ? `$${price.toFixed(2)}` : '—'}</div>
+                  {selectedPeriods.includes('1d') && (
+                    <div className={styles.periodValue}>
+                      <span className={styles.periodTag}>1d</span>
+                      <span className={change != null ? (change >= 0 ? styles.changeUp : styles.changeDown) : ''}>
+                        {change != null ? formatChange(change) : ''}
+                      </span>
+                    </div>
+                  )}
+                  {(selectedPeriods.includes('1w') || selectedPeriods.includes('1m')) && (
+                    <div className={styles.extraChanges}>
+                      {selectedPeriods.includes('1w') && (
+                        <div className={styles.periodValue}>
+                          <span className={styles.periodTag}>1w</span>
+                          <span className={change1w != null ? (change1w >= 0 ? styles.changeUpSmall : styles.changeDownSmall) : ''}>
+                            {change1w != null ? formatChange(change1w) : ''}
+                          </span>
+                        </div>
+                      )}
+                      {selectedPeriods.includes('1m') && (
+                        <div className={styles.periodValue}>
+                          <span className={styles.periodTag}>1m</span>
+                          <span className={change1m != null ? (change1m >= 0 ? styles.changeUpSmall : styles.changeDownSmall) : ''}>
+                            {change1m != null ? formatChange(change1m) : ''}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {mode === 'crypto' && (
+                    <button
+                      className={styles.remove}
+                      onClick={() => handleRemoveCryptoSymbol(s)}
+                      title="Remove crypto"
+                    >×</button>
+                  )}
+                  {mode === 'stocks' && (
+                    <button
+                      className={styles.remove}
+                      onClick={() => handleRemoveSymbol(s)}
+                      title="Remove symbol"
+                    >×</button>
+                  )}
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
     </TerminalBox>

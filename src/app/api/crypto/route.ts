@@ -91,6 +91,10 @@ export async function GET(request: Request) {
 
     const idsToQuery = Array.from(new Set(Object.values(tokenToId)));
 
+    if (idsToQuery.length === 0) {
+      throw new Error('No valid crypto symbols provided');
+    }
+
     let priceData: Record<string, any> = {};
     if (idsToQuery.length > 0) {
       // Use the markets endpoint to get price and percent changes for 24h, 7d and 30d in one request
