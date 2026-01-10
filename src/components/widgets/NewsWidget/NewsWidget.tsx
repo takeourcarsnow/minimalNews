@@ -9,6 +9,19 @@ import styles from './NewsWidget.module.css';
 
 const CATEGORIES = ['all', 'technology', 'business', 'science', 'health', 'politics'];
 
+function timeAgo(date: string): string {
+  const now = new Date();
+  const published = new Date(date);
+  const diffMs = now.getTime() - published.getTime();
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+
+  if (diffMins < 60) return `${diffMins}m ago`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d ago`;
+}
+
 interface NewsWidgetProps {
   category?: string;
 }
@@ -40,7 +53,7 @@ export default function NewsWidget({ category: initialCategory = 'all' }: NewsWi
         )}
       </div>
     ),
-    meta: `${item.source} • ${new Date(item.publishedAt).toLocaleDateString()}`,
+    meta: `${item.source} • ${timeAgo(item.publishedAt)}`,
     url: item.url,
   }));
 
