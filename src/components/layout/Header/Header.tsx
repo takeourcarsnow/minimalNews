@@ -2,6 +2,7 @@
 
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import ClockWidget from '@/components/widgets/ClockWidget';
+import WidgetsManager from '@/components/layout/WidgetsManager/WidgetsManager';
 import styles from './Header.module.css';
 
 interface HeaderProps {
@@ -37,6 +38,7 @@ export default function Header({ onOpenCli }: HeaderProps) {
         <ClockWidget />
         <div className={styles.controls}>
           <ThemeToggle />
+          <WidgetsManager />
           {onOpenCli && (
             <button onClick={onOpenCli} className={styles.cliButton}>
               [⌘] cli

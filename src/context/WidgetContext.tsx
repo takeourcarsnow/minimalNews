@@ -10,10 +10,13 @@ export interface WidgetConfig {
 
 interface WidgetContextType {
   widgets: WidgetConfig[];
+  availableWidgets: WidgetConfig[];
   updateWidgetProps: (id: string, props: Record<string, any>) => void;
   refreshAllWidgets: () => void;
   executeCommand: (command: string, args: string[]) => void;
   refreshKey: number;
+  toggleWidget: (id: string) => void;
+  isEnabled: (id: string) => boolean;
 }
 
 const WidgetContext = createContext<WidgetContextType | undefined>(undefined);
@@ -27,9 +30,42 @@ const DEFAULT_WIDGETS: WidgetConfig[] = [
   { id: 'reddit', component: 'RedditWidget' },
 ];
 
+// All available widgets (includes new widgets like crypto and clocks)
+const AVAILABLE_WIDGETS: WidgetConfig[] = [
+  ...DEFAULT_WIDGETS,
+  { id: 'crypto', component: 'CryptoWidget' },
+  { id: 'clocks', component: 'WorldClocksWidget' },
+];
+
 export function WidgetProvider({ children }: { children: ReactNode }) {
-  const [widgets, setWidgets] = useState<WidgetConfig[]>(DEFAULT_WIDGETS);
+  // Load enabled widgets from localStorage (persisted by id)
+  const loadInitialWidgets = () => {
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('enabledWidgets') : null;
+      if (raw) {
+        const ids: string[] = JSON.parse(raw);
+        // Map ids to available widget configs (preserve any saved props if needed)
+        return ids
+          .map(id => AVAILABLE_WIDGETS.find(w => w.id === id))
+          .filter(Boolean) as WidgetConfig[];
+      }
+    } catch (err) {
+      // ignore and fallback
+    }
+    return DEFAULT_WIDGETS;
+  };
+
+  const [widgets, setWidgets] = useState<WidgetConfig[]>(loadInitialWidgets);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    try {
+      const ids = widgets.map(w => w.id);
+      localStorage.setItem('enabledWidgets', JSON.stringify(ids));
+    } catch (err) {
+      // ignore
+    }
+  }, [widgets]);
 
   const updateWidgetProps = useCallback((id: string, props: Record<string, any>) => {
     setWidgets(prev => prev.map(widget =>
@@ -40,6 +76,23 @@ export function WidgetProvider({ children }: { children: ReactNode }) {
   const refreshAllWidgets = useCallback(() => {
     setRefreshKey(prev => prev + 1);
   }, []);
+
+  // Toggle whether a widget is enabled/visible
+  const toggleWidget = useCallback((id: string) => {
+    setWidgets(prev => {
+      const exists = prev.some(w => w.id === id);
+      if (exists) {
+        return prev.filter(w => w.id !== id);
+      }
+      const found = AVAILABLE_WIDGETS.find(w => w.id === id);
+      if (found) return [...prev, found];
+      return prev;
+    });
+  }, []);
+
+  const isEnabled = useCallback((id: string) => {
+    return widgets.some(w => w.id === id);
+  }, [widgets]);
 
   const executeCommand = useCallback((command: string, args: string[]) => {
     const commandMap: Record<string, (args: string[]) => void> = {
@@ -63,10 +116,13 @@ export function WidgetProvider({ children }: { children: ReactNode }) {
 
   const value = {
     widgets,
+    availableWidgets: AVAILABLE_WIDGETS,
     updateWidgetProps,
     refreshAllWidgets,
     executeCommand,
     refreshKey,
+    toggleWidget,
+    isEnabled,
   };
 
   return (

@@ -1,0 +1,39 @@
+.container {
+  padding: var(--spacing-sm);
+}
+
+.headerLine {
+  color: var(--primary);
+  font-family: var(--font-mono);
+  margin-bottom: var(--spacing-sm);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.row {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: center;
+}
+
+.symbol {
+  width: 50px;
+  font-weight: bold;
+  color: var(--accent);
+}
+
+.price {
+  flex: 1;
+  color: var(--fg);
+}
+
+.changeUp {
+  color: #7ee787;
+}
+.changeDown {
+  color: #ff7b7b;
+}

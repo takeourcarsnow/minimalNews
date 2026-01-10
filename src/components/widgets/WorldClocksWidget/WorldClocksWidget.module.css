@@ -1,0 +1,55 @@
+.container {
+  padding: var(--spacing-sm);
+}
+
+.controls {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.input {
+  flex: 1;
+  background: transparent;
+  border: 1px solid var(--border);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  color: var(--fg);
+}
+
+.button {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--primary);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  cursor: pointer;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.row {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: center;
+}
+
+.time {
+  font-family: var(--font-mono);
+  font-weight: bold;
+  margin-right: var(--spacing-md);
+}
+
+.zone {
+  color: var(--muted);
+  flex: 1;
+}
+
+.remove {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+}

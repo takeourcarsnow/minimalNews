@@ -4,7 +4,7 @@ import type { ApiResponse } from '@/types/api';
 
 // Generic widget data fetching hook
 export function useWidgetData<T>(
-  apiUrl: string,
+  apiUrl: string | null,
   deps: any[] = [],
   options?: {
     initialData?: T | null;
@@ -16,6 +16,11 @@ export function useWidgetData<T>(
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
+    if (!apiUrl) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -25,6 +25,8 @@ import RedditWidget from '@/components/widgets/RedditWidget';
 import HackerNewsWidget from '@/components/widgets/HackerNewsWidget';
 import TrendingWidget from '@/components/widgets/TrendingWidget';
 import QuoteWidget from '@/components/widgets/QuoteWidget';
+import CryptoWidget from '@/components/widgets/CryptoWidget/CryptoWidget';
+import WorldClocksWidget from '@/components/widgets/WorldClocksWidget/WorldClocksWidget';
 import DraggableWidget from '@/components/ui/DraggableWidget';
 import CommandLine from '@/components/ui/CommandLine';
 import { useWidgets } from '@/context/WidgetContext';
@@ -38,6 +40,8 @@ const WIDGET_COMPONENTS = {
   HackerNewsWidget,
   TrendingWidget,
   QuoteWidget,
+  CryptoWidget,
+  WorldClocksWidget,
 };
 
 export default function Home() {
@@ -45,6 +49,11 @@ export default function Home() {
   const [isCliOpen, setIsCliOpen] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [widgetOrder, setWidgetOrder] = useState(widgets.map(w => w.id));
+
+  // Keep widget order in sync when enabled widgets change
+  useEffect(() => {
+    setWidgetOrder(widgets.map(w => w.id));
+  }, [widgets]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
