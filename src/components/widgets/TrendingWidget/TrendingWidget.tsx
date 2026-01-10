@@ -19,7 +19,7 @@ export default function TrendingWidget() {
   const [trending, setTrending] = useState<SocialTrending | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'twitter' | 'github'>('twitter');
+  const [activeTab, setActiveTab] = useState<'github' | 'twitter'>('github');
 
   useEffect(() => {
     fetchTrending();
@@ -57,44 +57,18 @@ export default function TrendingWidget() {
       <div className={styles.container}>
         <div className={styles.tabs}>
           <button
-            onClick={() => setActiveTab('twitter')}
-            className={`${styles.tab} ${activeTab === 'twitter' ? styles.active : ''}`}
-          >
-            [twitter/X]
-          </button>
-          <button
             onClick={() => setActiveTab('github')}
             className={`${styles.tab} ${activeTab === 'github' ? styles.active : ''}`}
           >
             [github]
           </button>
+          <button
+            onClick={() => setActiveTab('twitter')}
+            className={`${styles.tab} ${activeTab === 'twitter' ? styles.active : ''}`}
+          >
+            [twitter/X]
+          </button>
         </div>
-
-        {trending && activeTab === 'twitter' && (
-          <div className={styles.section}>
-            <ul className={styles.list}>
-              {trending.twitter.map((topic, index) => (
-                <li key={topic.id} className={styles.item}>
-                  <span className={styles.index}>{index + 1}</span>
-                  <div className={styles.content}>
-                    <a
-                      href={`https://x.com/hashtag/${topic.name.replace('#', '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.hashtag}
-                    >
-                      {topic.name}
-                    </a>
-                    <span className={styles.category}>{topic.category}</span>
-                  </div>
-                  {topic.volume && (
-                    <span className={styles.volume}>{formatNumber(topic.volume)} posts</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
 
         {trending && activeTab === 'github' && (
           <div className={styles.section}>
@@ -117,6 +91,32 @@ export default function TrendingWidget() {
                       <span className={styles.stars}>★ {formatNumber(repo.stars)}</span>
                     </div>
                   </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {trending && activeTab === 'twitter' && (
+          <div className={styles.section}>
+            <ul className={styles.list}>
+              {trending.twitter.map((topic, index) => (
+                <li key={topic.id} className={styles.item}>
+                  <span className={styles.index}>{index + 1}</span>
+                  <div className={styles.content}>
+                    <a
+                      href={topic.url || `https://x.com/hashtag/${topic.name.replace('#', '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.hashtag}
+                    >
+                      {topic.name}
+                    </a>
+                    <span className={styles.category}>{topic.category}</span>
+                  </div>
+                  {topic.volume && (
+                    <span className={styles.volume}>{formatNumber(topic.volume)} posts</span>
+                  )}
                 </li>
               ))}
             </ul>

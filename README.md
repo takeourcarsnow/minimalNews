@@ -34,11 +34,22 @@ A minimal digital detox webapp that unites all essential stuff like weather, new
 # Install dependencies
 npm install
 
+# Copy environment variables
+cp .env.example .env.local
+```
+
+Edit `.env.local` and add your API keys (see Environment Variables section below).
+
+```bash
 # Run development server
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to view the app.
+
+### Environment Variables
+
+No environment variables are required for this application. All data is fetched from public sources without API keys.
 
 ### Build for Production
 

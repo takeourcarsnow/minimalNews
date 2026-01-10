@@ -98,12 +98,6 @@ export async function GET(request: Request) {
       99: 'Thunderstorm with heavy hail',
     };
 
-    function getWindDirection(degrees: number): string {
-      const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-      const index = Math.round(degrees / 22.5) % 16;
-      return directions[index];
-    }
-
     const current = data.current;
     const weatherData: WeatherData = {
       location: locationName,

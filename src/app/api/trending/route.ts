@@ -1,119 +1,143 @@
 import { NextResponse } from 'next/server';
 import type { SocialTrending, ApiResponse } from '@/types/api';
+import * as cheerio from 'cheerio';
 
 async function fetchGitHubTrending(): Promise<SocialTrending['github']> {
   try {
-    // GitHub's unofficial trending page scraping alternative
-    // Using the GitHub API for starred repos as proxy
-    const response = await fetch(
-      'https://api.github.com/search/repositories?q=created:>2026-01-01&sort=stars&order=desc&per_page=10',
-      {
-        headers: {
-          Accept: 'application/vnd.github.v3+json',
-          'User-Agent': 'Terminal-Detox-App/1.0',
-        },
-        next: { revalidate: 1800 }, // Cache for 30 minutes
-      }
-    );
+    const response = await fetch('https://github.com/trending', {
+      headers: {
+        'User-Agent': 'Terminal-Detox-App/1.0',
+      },
+    });
 
     if (!response.ok) {
-      throw new Error('GitHub API error');
+      throw new Error('GitHub trending fetch error');
     }
 
-    const data = await response.json();
-    return data.items.map((repo: any) => ({
-      name: repo.full_name,
-      description: repo.description || 'No description',
-      language: repo.language || 'Unknown',
-      stars: repo.stargazers_count,
-      url: repo.html_url,
-    }));
+    const html = await response.text();
+    const $ = cheerio.load(html);
+    const repos: SocialTrending['github'] = [];
+
+    $('article.Box-row').each((index, element) => {
+      if (index >= 5) return false; // Limit to 5 repos
+
+      const $article = $(element);
+      const title = $article.find('h2 a').text().trim().replace(/\s+/g, ' ');
+      const description = $article.find('p').text().trim();
+      const language = $article.find('[itemprop="programmingLanguage"]').text().trim();
+      const starsText = $article.find('a[href*="stargazers"]').text().trim();
+      const stars = parseInt(starsText.replace(/,/g, '')) || 0;
+      const url = 'https://github.com' + $article.find('h2 a').attr('href');
+
+      repos.push({
+        name: title,
+        description: description || 'No description',
+        language: language || 'Unknown',
+        stars,
+        url,
+      });
+    });
+
+    return repos;
   } catch (error) {
     console.error('GitHub trending error:', error);
     return [];
   }
 }
 
-async function fetchRedditTrending(): Promise<SocialTrending['reddit']> {
+async function fetchTwitterTrending(): Promise<SocialTrending['twitter']> {
   try {
-    // Get trending subreddits from Reddit's public API
-    const response = await fetch('https://www.reddit.com/subreddits/popular.json?limit=10', {
+    const response = await fetch('https://getdaytrends.com/', {
       headers: {
-        'User-Agent': 'Terminal-Detox-App/1.0',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
       },
-      next: { revalidate: 1800 }, // Cache for 30 minutes
     });
 
     if (!response.ok) {
-      throw new Error('Reddit API error');
+      console.error('Twitter trends fetch error:', response.status, response.statusText);
+      throw new Error('Twitter trends fetch error');
     }
 
-    const data = await response.json();
-    return data.data.children.map((sub: any) => ({
-      name: sub.data.display_name,
-      subscribers: sub.data.subscribers,
-      description: sub.data.public_description || sub.data.display_name_prefixed,
-    }));
-  } catch (error) {
-    console.error('Reddit trending error:', error);
-    return [];
-  }
-}
+    const html = await response.text();
+    const $ = cheerio.load(html);
+    const trends: SocialTrending['twitter'] = [];
 
-async function fetchHackerNewsTrending(): Promise<SocialTrending['hackernews']> {
-  try {
-    // Get top stories from HN
-    const response = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json', {
-      next: { revalidate: 1800 },
+    $('li').each((index, element) => {
+      if (index >= 5) return false;
+
+      const $li = $(element);
+      const fullText = $li.text().trim();
+
+      // Extract hashtag from the text
+      const hashtagMatch = fullText.match(/#([^\sUnder]+)/);
+      let trendName = '';
+      let volume = 0;
+
+      if (hashtagMatch) {
+        trendName = '#' + hashtagMatch[1];
+      }
+
+      // Extract volume
+      const volumeMatch = fullText.match(/(\d+(?:\.\d+)?)(K|M)? tweets/);
+      if (volumeMatch) {
+        volume = parseFloat(volumeMatch[1]);
+        if (volumeMatch[2] === 'K') volume *= 1000;
+        if (volumeMatch[2] === 'M') volume *= 1000000;
+      }
+
+      if (trendName && trendName.length > 1 && trendName !== '#Trending' && trendName !== '#Top' && trendName !== '#Help') {
+        trends.push({
+          id: trendName,
+          name: trendName,
+          category: 'Trending',
+          volume: Math.floor(volume),
+          url: `https://twitter.com/search?q=${encodeURIComponent(trendName)}`,
+        });
+      }
     });
 
-    if (!response.ok) {
-      throw new Error('HackerNews API error');
+    if (trends.length === 0) {
+      // Fallback: try to extract hashtags from the entire text
+      const textContent = $.text();
+      const hashtagRegex = /#([^\s\n]+)/g;
+      let match;
+      while ((match = hashtagRegex.exec(textContent)) && trends.length < 5) {
+        const trendName = '#' + match[1];
+        if (trendName.length > 2 && !trends.find(t => t.name === trendName)) {
+          trends.push({
+            id: trendName,
+            name: trendName,
+            category: 'Trending',
+            volume: 0,
+            url: `https://twitter.com/search?q=${encodeURIComponent(trendName)}`,
+          });
+        }
+      }
     }
 
-    const storyIds: number[] = await response.json();
-    const topIds = storyIds.slice(0, 5);
-
-    // Get story details
-    const stories = await Promise.all(
-      topIds.map(async (id) => {
-        const itemResponse = await fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
-        return itemResponse.json();
-      })
-    );
-
-    return stories
-      .filter(story => story && story.title)
-      .map(story => ({
-        title: story.title,
-        score: story.score,
-        comments: story.descendants || 0,
-        url: story.url || `https://news.ycombinator.com/item?id=${story.id}`,
-      }));
+    return trends;
   } catch (error) {
-    console.error('HackerNews trending error:', error);
+    console.error('Twitter trending error:', error);
     return [];
   }
 }
 
 export async function GET() {
   try {
-    const [github, reddit, hackernews] = await Promise.all([
+    const [github, twitter] = await Promise.all([
       fetchGitHubTrending(),
-      fetchRedditTrending(),
-      fetchHackerNewsTrending(),
+      fetchTwitterTrending(),
     ]);
-
-    // For Twitter/X trends, we would need API access
-    // Return empty array for now
-    const twitter: SocialTrending['twitter'] = [];
 
     const result: ApiResponse<SocialTrending> = {
       data: {
         github,
         twitter,
-        reddit,
-        hackernews,
       },
       error: null,
       timestamp: new Date().toISOString(),

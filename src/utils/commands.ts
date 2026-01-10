@@ -33,7 +33,7 @@ export const commandUtils = {
   },
 
   async fetchTrending() {
-    const res: ApiResponse<{ github: any[], twitter: TrendingTopic[], reddit: any[], hackernews: any[] }> = await apiFetch('/api/trending');
+    const res: ApiResponse<{ github: any[], twitter: TrendingTopic[] }> = await apiFetch('/api/trending');
     const data = res.data;
     if (data && data.github && data.github.length) {
       const out = data.github.slice(0, 5).map((g: any, idx: number) => `${idx + 1}. ${g.name} (${g.stars} ★)`).join('\n');
