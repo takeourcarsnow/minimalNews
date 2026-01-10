@@ -17,6 +17,7 @@ interface WidgetContextType {
   refreshKey: number;
   toggleWidget: (id: string) => void;
   isEnabled: (id: string) => boolean;
+  moveWidget: (id: string, dir: 'up' | 'down') => void;
 }
 
 const WidgetContext = createContext<WidgetContextType | undefined>(undefined);
@@ -97,6 +98,20 @@ export function WidgetProvider({ children }: { children: ReactNode }) {
     return widgets.some(w => w.id === id);
   }, [widgets]);
 
+  // Move widget up or down within the enabled widgets list
+  const moveWidget = useCallback((id: string, dir: 'up' | 'down') => {
+    setWidgets(prev => {
+      const idx = prev.findIndex(w => w.id === id);
+      if (idx === -1) return prev;
+      const newIdx = dir === 'up' ? Math.max(0, idx - 1) : Math.min(prev.length - 1, idx + 1);
+      if (newIdx === idx) return prev;
+      const arr = [...prev];
+      const [item] = arr.splice(idx, 1);
+      arr.splice(newIdx, 0, item);
+      return arr;
+    });
+  }, []);
+
   const executeCommand = useCallback((command: string, args: string[]) => {
     const commandMap: Record<string, (args: string[]) => void> = {
       weather: (args) => updateWidgetProps('weather', { defaultLocation: args.join(' ') || 'New York' }),
@@ -126,6 +141,7 @@ export function WidgetProvider({ children }: { children: ReactNode }) {
     refreshKey,
     toggleWidget,
     isEnabled,
+    moveWidget,
   };
 
   return (

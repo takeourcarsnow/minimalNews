@@ -25,15 +25,38 @@ function formatChange(val: number) {
 export default function CryptoWidget() {
   const [mode, setMode] = useState<Mode>('crypto');
   const [selectedSymbols, setSelectedSymbols] = useState<string[]>(DEFAULT_STOCK_SYMBOLS);
+  const [selectedCryptoSymbols, setSelectedCryptoSymbols] = useState<string[]>(DEFAULT_CRYPTO_SYMBOLS);
   const [newSymbol, setNewSymbol] = useState('');
+  const [newCryptoSymbol, setNewCryptoSymbol] = useState('');
   const [selectedPeriods, setSelectedPeriods] = useState<string[]>(['1d','1w','1m']);
-  const symbols = mode === 'crypto' ? DEFAULT_CRYPTO_SYMBOLS : selectedSymbols;
+  const symbols = mode === 'crypto' ? selectedCryptoSymbols : selectedSymbols;
+  const [cryptoIdMap, setCryptoIdMap] = useState<Record<string,string>>(CRYPTO_SYMBOL_MAP);
   const [data, setData] = useState<Record<string, any> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  async function resolveCryptoId(symbol: string) {
+    const key = symbol.toUpperCase();
+    if (cryptoIdMap[key]) return cryptoIdMap[key];
+    try {
+      const q = encodeURIComponent(symbol);
+      const res = await fetch(`/api/crypto/search?query=${q}`);
+      if (!res.ok) return null;
+      const js = await res.json();
+      const id = js?.data?.id || null;
+      if (id) {
+        setCryptoIdMap(prev => ({ ...prev, [key]: id }));
+        return id;
+      }
+    } catch (err) {
+      // ignore
+    }
+    return null;
+  }
+
   const [notice, setNotice] = useState('');
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const stockInputRef = useRef<HTMLInputElement | null>(null);
+  const cryptoInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleAddSymbol = () => {
     const s = newSymbol.trim().toUpperCase();
@@ -48,7 +71,7 @@ export default function CryptoWidget() {
     }
     setNewSymbol('');
     // refocus the input so user can quickly add another symbol
-    inputRef?.current?.focus();
+    stockInputRef?.current?.focus();
   };
 
   const handleRemoveSymbol = (s: string) => {
@@ -60,12 +83,64 @@ export default function CryptoWidget() {
   const canAdd = !!newSymbol.trim() && !selectedSymbols.map(x => x.toUpperCase()).includes(newSymbol.trim().toUpperCase());
   const addHelperText = !newSymbol.trim() ? 'Enter a symbol' : (selectedSymbols.map(x => x.toUpperCase()).includes(newSymbol.trim().toUpperCase()) ? 'Already added' : '');
 
+  // Crypto handlers
+  const handleAddCryptoSymbol = async () => {
+    const s = newCryptoSymbol.trim().toUpperCase();
+    if (!s) return;
+    if (!selectedCryptoSymbols.map(x => x.toUpperCase()).includes(s)) {
+      // resolve id first so the subsequent fetch includes it
+      const id = await resolveCryptoId(s);
+      setSelectedCryptoSymbols(prev => [...prev, s]);
+      setNotice(`Added ${s}`);
+      setTimeout(() => setNotice(''), 2000);
+      // if we resolved an id, trigger a quick reload by clearing data (shows loading) and allowing effect to run (symbols changed)
+      if (id) setData(null);
+    } else {
+      setNotice(`${s} already added`);
+      setTimeout(() => setNotice(''), 1500);
+    }
+    setNewCryptoSymbol('');
+    cryptoInputRef?.current?.focus();
+  };
+
+  const handleRemoveCryptoSymbol = (s: string) => {
+    setSelectedCryptoSymbols(selectedCryptoSymbols.filter(x => x !== s));
+    setNotice(`Removed ${s}`);
+    setTimeout(() => setNotice(''), 1500);
+  };
+
+  const canAddCrypto = !!newCryptoSymbol.trim() && !selectedCryptoSymbols.map(x => x.toUpperCase()).includes(newCryptoSymbol.trim().toUpperCase());
+  const addHelperTextCrypto = !newCryptoSymbol.trim() ? 'Enter a symbol' : (selectedCryptoSymbols.map(x => x.toUpperCase()).includes(newCryptoSymbol.trim().toUpperCase()) ? 'Already added' : '');
+
   useEffect(() => {
     if (mode === 'stocks') {
       // focus input when switching to stocks mode
-      setTimeout(() => inputRef?.current?.focus(), 50);
+      setTimeout(() => stockInputRef?.current?.focus(), 50);
+    } else if (mode === 'crypto') {
+      setTimeout(() => cryptoInputRef?.current?.focus(), 50);
     }
   }, [mode]);
+
+  // Persist cryptoIdMap to localStorage so resolved ids survive reloads
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('cryptoIdMap');
+      if (raw) {
+        const parsed = JSON.parse(raw) as Record<string,string>;
+        setCryptoIdMap(prev => ({ ...prev, ...parsed }));
+      }
+    } catch (err) {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('cryptoIdMap', JSON.stringify(cryptoIdMap));
+    } catch (err) {
+      // ignore
+    }
+  }, [cryptoIdMap]);
 
   useEffect(() => {
     let mounted = true;
@@ -76,7 +151,7 @@ export default function CryptoWidget() {
       try {
         let url: string;
         if (mode === 'crypto') {
-          const ids = symbols.map(s => CRYPTO_SYMBOL_MAP[s] || '').filter(Boolean).join(',');
+          const ids = symbols.map(s => cryptoIdMap[s.toUpperCase()] || s.toLowerCase()).filter(Boolean).join(',');
           url = `/api/crypto?ids=${encodeURIComponent(ids)}`;
         } else {
           // include periods in query
@@ -111,7 +186,7 @@ export default function CryptoWidget() {
 
   const getPriceData = (symbol: string) => {
     if (mode === 'crypto') {
-      const id = CRYPTO_SYMBOL_MAP[symbol];
+      const id = cryptoIdMap[symbol.toUpperCase()] || symbol.toLowerCase();
       const info = data?.data?.[id];
       return {
         price: typeof info?.usd === 'number' ? info.usd : undefined,
@@ -155,14 +230,18 @@ export default function CryptoWidget() {
 
         {mode === 'stocks' && (
           <div className={styles.controls}>
-            <div className={styles.addRow}>
+            <div className={styles.addRow} onClick={() => stockInputRef?.current?.focus()}>
+              <label className={styles.inputLabel} htmlFor="stock-add-input">Add</label>
               <input
-                ref={inputRef}
+                id="stock-add-input"
+                ref={stockInputRef}
                 value={newSymbol}
                 onChange={(e) => setNewSymbol(e.target.value.toUpperCase())}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleAddSymbol(); }}
                 placeholder="Add symbol (e.g. NFLX)"
+                aria-label="Add stock symbol"
                 className={styles.input}
+                tabIndex={0}
               />
               <button
                 className={styles.button}
@@ -170,7 +249,7 @@ export default function CryptoWidget() {
                 disabled={!canAdd}
                 title={addHelperText || 'Add symbol'}
               >Add</button>
-              <span className={styles.helperText}>{addHelperText}</span>
+              <span className={styles.helperText} onClick={() => stockInputRef?.current?.focus()}>{addHelperText}</span>
               {notice && <span className={styles.notice}>{notice}</span>}
             </div>
 
@@ -187,6 +266,33 @@ export default function CryptoWidget() {
                   /> {p}
                 </label>
               ))}
+            </div>
+          </div>
+        )}
+
+        {mode === 'crypto' && (
+          <div className={styles.controls}>
+            <div className={styles.addRow} onClick={() => cryptoInputRef?.current?.focus()}>
+              <label className={styles.inputLabel} htmlFor="crypto-add-input">Add</label>
+              <input
+                id="crypto-add-input"
+                ref={cryptoInputRef}
+                value={newCryptoSymbol}
+                onChange={(e) => setNewCryptoSymbol(e.target.value.toUpperCase())}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleAddCryptoSymbol(); }}
+                placeholder="Add crypto (e.g. LTC, DOT)"
+                aria-label="Add crypto symbol"
+                className={styles.input}
+                tabIndex={0}
+              />
+              <button
+                className={styles.button}
+                onClick={() => handleAddCryptoSymbol()}
+                disabled={!canAddCrypto}
+                title={addHelperTextCrypto || 'Add crypto'}
+              >Add</button>
+              <span className={styles.helperText} onClick={() => cryptoInputRef?.current?.focus()}>{addHelperTextCrypto}</span>
+              {notice && <span className={styles.notice}>{notice}</span>}
             </div>
           </div>
         )}
@@ -214,6 +320,13 @@ export default function CryptoWidget() {
                       </div>
                     )}
                   </div>
+                )}
+                {mode === 'crypto' && (
+                  <button
+                    className={styles.remove}
+                    onClick={() => handleRemoveCryptoSymbol(s)}
+                    title="Remove crypto"
+                  >×</button>
                 )}
                 {mode === 'stocks' && (
                   <button
