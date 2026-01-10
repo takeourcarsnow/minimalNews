@@ -93,9 +93,11 @@ export default function WeatherWidget() {
   const [locationDetected, setLocationDetected] = useState(false);
   const [detectingLocation, setDetectingLocation] = useState(true);
 
+  const apiUrl = location ? `/api/weather?location=${encodeURIComponent(location)}` : null;
+
   const { data: weather, loading, error, refetch } = useWidgetData<WeatherData>(
-    `/api/weather${location ? `?location=${encodeURIComponent(location)}` : ''}`,
-    [location],
+    apiUrl,
+    [apiUrl],
     { initialData: null }
   );
 
