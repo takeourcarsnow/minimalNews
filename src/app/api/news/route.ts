@@ -161,13 +161,12 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('News fetch error:', error);
 
-    // Return empty array as fallback
     const result: ApiResponse<NewsItem[]> = {
-      data: [],
-      error: 'Failed to fetch news',
+      data: null,
+      error: 'Unable to fetch news data. Please try again later.',
       timestamp: new Date().toISOString(),
     };
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, { status: 500 });
   }
 }

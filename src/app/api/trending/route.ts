@@ -105,14 +105,8 @@ export async function GET() {
     ]);
 
     // For Twitter/X trends, we would need API access
-    // Using a placeholder for now - in production, consider alternative free sources
-    const twitter: SocialTrending['twitter'] = [
-      { id: '1', name: '#OpenSource', category: 'Technology', volume: 50000 },
-      { id: '2', name: '#WebDev', category: 'Technology', volume: 35000 },
-      { id: '3', name: '#AI', category: 'Technology', volume: 75000 },
-      { id: '4', name: '#Climate', category: 'Environment', volume: 25000 },
-      { id: '5', name: '#Music', category: 'Entertainment', volume: 40000 },
-    ];
+    // Return empty array for now
+    const twitter: SocialTrending['twitter'] = [];
 
     const result: ApiResponse<SocialTrending> = {
       data: {
@@ -129,27 +123,12 @@ export async function GET() {
   } catch (error) {
     console.error('Trending API error:', error);
 
-    // Return fallback data
-    const fallbackData: SocialTrending = {
-      github: [
-        { name: 'facebook/react', description: 'A declarative, efficient, and flexible JavaScript library', language: 'JavaScript', stars: 220000, url: 'https://github.com/facebook/react' },
-        { name: 'microsoft/vscode', description: 'Visual Studio Code', language: 'TypeScript', stars: 156000, url: 'https://github.com/microsoft/vscode' },
-        { name: 'torvalds/linux', description: 'Linux kernel source tree', language: 'C', stars: 168000, url: 'https://github.com/torvalds/linux' },
-      ],
-      twitter: [
-        { id: '1', name: '#OpenSource', category: 'Technology', volume: 50000 },
-        { id: '2', name: '#WebDev', category: 'Technology', volume: 35000 },
-      ],
-      reddit: [],
-      hackernews: [],
-    };
-
     const result: ApiResponse<SocialTrending> = {
-      data: fallbackData,
-      error: null,
+      data: null,
+      error: 'Unable to fetch trending data. Please try again later.',
       timestamp: new Date().toISOString(),
     };
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, { status: 500 });
   }
 }

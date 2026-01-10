@@ -49,21 +49,12 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Reddit API error:', error);
 
-    // Mock data for development
-    const mockData: RedditPost[] = [
-      { id: '1', title: 'TIL something fascinating about the universe', subreddit: 'todayilearned', score: 15420, numComments: 892, url: 'https://example.com', permalink: 'https://reddit.com/r/todayilearned/1', author: 'curious_learner', createdAt: new Date().toISOString() },
-      { id: '2', title: 'Scientists discover new species in deep ocean', subreddit: 'science', score: 8934, numComments: 456, url: 'https://example.com', permalink: 'https://reddit.com/r/science/2', author: 'marine_bio', createdAt: new Date().toISOString() },
-      { id: '3', title: 'This sunset from my balcony', subreddit: 'pics', score: 23456, numComments: 234, url: 'https://example.com', permalink: 'https://reddit.com/r/pics/3', author: 'photo_lover', createdAt: new Date().toISOString() },
-      { id: '4', title: 'New programming language gains popularity', subreddit: 'programming', score: 3421, numComments: 567, url: 'https://example.com', permalink: 'https://reddit.com/r/programming/4', author: 'dev_guru', createdAt: new Date().toISOString() },
-      { id: '5', title: 'Wholesome moment at local coffee shop', subreddit: 'MadeMeSmile', score: 12345, numComments: 189, url: 'https://example.com', permalink: 'https://reddit.com/r/MadeMeSmile/5', author: 'happy_person', createdAt: new Date().toISOString() },
-    ];
-
     const result: ApiResponse<RedditPost[]> = {
-      data: mockData,
-      error: 'Using mock data',
+      data: null,
+      error: 'Unable to fetch Reddit data. Please try again later.',
       timestamp: new Date().toISOString(),
     };
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, { status: 500 });
   }
 }

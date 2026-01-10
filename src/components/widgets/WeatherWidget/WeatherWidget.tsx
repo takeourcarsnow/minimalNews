@@ -102,11 +102,11 @@ export default function WeatherWidget({ defaultLocation = 'New York' }: WeatherW
 
   // React to prop updates from CLI or other actions so the widget updates immediately
   useEffect(() => {
-    if (defaultLocation && defaultLocation !== location) {
+    if (defaultLocation && defaultLocation !== location && !locationDetected) {
       updateProps({ location: defaultLocation });
       setInputValue(defaultLocation);
     }
-  }, [defaultLocation, location, updateProps]);
+  }, [defaultLocation, location, updateProps, locationDetected]);
 
   // Detect user's location on mount
   useEffect(() => {
@@ -117,22 +117,28 @@ export default function WeatherWidget({ defaultLocation = 'New York' }: WeatherW
           async (position) => {
             const { latitude, longitude } = position.coords;
             try {
-              // Use BigDataCloud for reverse geocoding (free tier, CORS-friendly)
+              // Use Nominatim for reverse geocoding (free, no API key required)
               const response = await fetch(
-                `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`
               );
 
               if (response.ok) {
                 const data = await response.json();
-                if (data.city) {
-                  const detectedLocation = `${data.city}${data.principalSubdivision ? ', ' + data.principalSubdivision : ''}`;
-                  updateProps({ location: detectedLocation });
-                  setInputValue(detectedLocation);
+                if (data && data.address) {
+                  const city = data.address.city || data.address.town || data.address.village || data.address.hamlet;
+                  const state = data.address.state || data.address.region;
+                  if (city) {
+                    const detectedLocation = state ? `${city}, ${state}` : city;
+                    updateProps({ location: detectedLocation });
+                    setInputValue(detectedLocation);
+                  } else {
+                    // Use coordinates as fallback
+                    const coordLocation = `${latitude.toFixed(2)},${longitude.toFixed(2)}`;
+                    updateProps({ location: coordLocation });
+                    setInputValue(coordLocation);
+                  }
                 } else {
-                  // Use coordinates as fallback
-                  const coordLocation = `${latitude.toFixed(2)},${longitude.toFixed(2)}`;
-                  updateProps({ location: coordLocation });
-                  setInputValue(coordLocation);
+                  throw new Error('No address data');
                 }
               } else {
                 throw new Error('Geocoding service unavailable');

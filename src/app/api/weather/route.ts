@@ -31,43 +31,100 @@ export async function GET(request: Request) {
   const location = searchParams.get('location') || 'New York';
 
   try {
-    // Use wttr.in for real weather data (no API key required)
-    const wttrUrl = `https://wttr.in/${encodeURIComponent(location)}?format=j1`;
-    const response = await fetch(wttrUrl, {
-      headers: {
-        'User-Agent': 'Terminal-Detox-App/1.0',
-      },
-      next: { revalidate: 1800 }, // Cache for 30 minutes
-    });
+    let lat: number, lon: number, locationName: string;
+
+    // Check if location is coordinates (lat,lon format)
+    const coordMatch = location.match(/^(-?\d+\.?\d*),(-?\d+\.?\d*)$/);
+    if (coordMatch) {
+      lat = parseFloat(coordMatch[1]);
+      lon = parseFloat(coordMatch[2]);
+      locationName = location;
+    } else {
+      // Use Nominatim to get coordinates for the location name
+      const geocodeResponse = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1`
+      );
+      if (!geocodeResponse.ok) {
+        throw new Error('Geocoding service unavailable');
+      }
+      const geocodeData = await geocodeResponse.json();
+      if (!geocodeData || geocodeData.length === 0) {
+        throw new Error('Location not found');
+      }
+      lat = parseFloat(geocodeData[0].lat);
+      lon = parseFloat(geocodeData[0].lon);
+      locationName = geocodeData[0].display_name.split(',')[0]; // Get city name
+    }
+
+    // Use Open-Meteo API (free, no API key required)
+    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_direction_10m,visibility,surface_pressure&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto`;
+    const response = await fetch(weatherUrl);
 
     if (!response.ok) {
       throw new Error('Weather service unavailable');
     }
 
     const data = await response.json();
-    const current = data.current_condition[0];
-    const weather = data.weather[0];
 
+    // Map weather codes to conditions
+    const weatherCodeMap: Record<number, string> = {
+      0: 'Clear',
+      1: 'Mainly clear',
+      2: 'Partly cloudy',
+      3: 'Overcast',
+      45: 'Fog',
+      48: 'Depositing rime fog',
+      51: 'Light drizzle',
+      53: 'Moderate drizzle',
+      55: 'Dense drizzle',
+      56: 'Light freezing drizzle',
+      57: 'Dense freezing drizzle',
+      61: 'Slight rain',
+      63: 'Moderate rain',
+      65: 'Heavy rain',
+      66: 'Light freezing rain',
+      67: 'Heavy freezing rain',
+      71: 'Slight snow fall',
+      73: 'Moderate snow fall',
+      75: 'Heavy snow fall',
+      77: 'Snow grains',
+      80: 'Slight rain showers',
+      81: 'Moderate rain showers',
+      82: 'Violent rain showers',
+      85: 'Slight snow showers',
+      86: 'Heavy snow showers',
+      95: 'Thunderstorm',
+      96: 'Thunderstorm with slight hail',
+      99: 'Thunderstorm with heavy hail',
+    };
+
+    function getWindDirection(degrees: number): string {
+      const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+      const index = Math.round(degrees / 22.5) % 16;
+      return directions[index];
+    }
+
+    const current = data.current;
     const weatherData: WeatherData = {
-      location: data.nearest_area[0].areaName[0].value,
+      location: locationName,
       current: {
-        temp: parseInt(current.temp_C),
-        feels_like: parseInt(current.FeelsLikeC),
-        humidity: parseInt(current.humidity),
-        wind_speed: parseInt(current.windspeedKmph),
-        wind_direction: current.winddir16Point,
-        condition: current.weatherDesc[0].value,
-        icon: conditionIcons[current.weatherDesc[0].value] || '☀',
-        visibility: parseInt(current.visibility),
-        pressure: parseInt(current.pressure),
+        temp: Math.round(current.temperature_2m),
+        feels_like: Math.round(current.apparent_temperature),
+        humidity: Math.round(current.relative_humidity_2m),
+        wind_speed: Math.round(current.wind_speed_10m),
+        wind_direction: getWindDirection(current.wind_direction_10m),
+        condition: weatherCodeMap[current.weather_code] || 'Unknown',
+        icon: conditionIcons[weatherCodeMap[current.weather_code] || 'Clear'] || '☀',
+        visibility: Math.round((current.visibility || 10000) / 1000), // Convert to km
+        pressure: Math.round(current.surface_pressure),
       },
-      forecast: data.weather.slice(0, 5).map((day: any) => ({
-        date: day.date,
-        high: parseInt(day.maxtempC),
-        low: parseInt(day.mintempC),
-        condition: day.hourly[4].weatherDesc[0].value, // Midday condition
-        icon: conditionIcons[day.hourly[4].weatherDesc[0].value] || '☀',
-        precipitation: parseInt(day.hourly[4].chanceofrain) || 0,
+      forecast: data.daily.time.slice(0, 5).map((date: string, index: number) => ({
+        date,
+        high: Math.round(data.daily.temperature_2m_max[index]),
+        low: Math.round(data.daily.temperature_2m_min[index]),
+        condition: weatherCodeMap[data.daily.weather_code[index]] || 'Unknown',
+        icon: conditionIcons[weatherCodeMap[data.daily.weather_code[index]] || 'Clear'] || '☀',
+        precipitation: data.daily.precipitation_probability_max[index],
       })),
       lastUpdated: new Date().toISOString(),
     };
@@ -82,36 +139,12 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Weather API error:', error);
 
-    // Return mock data as fallback
-    const mockWeatherData: WeatherData = {
-      location: location,
-      current: {
-        temp: 22,
-        feels_like: 24,
-        humidity: 65,
-        wind_speed: 15,
-        wind_direction: 'SW',
-        condition: 'Partly cloudy',
-        icon: '⛅',
-        visibility: 10,
-        pressure: 1013,
-      },
-      forecast: [
-        { date: new Date().toISOString().split('T')[0], high: 25, low: 18, condition: 'Sunny', icon: '☀', precipitation: 0 },
-        { date: new Date(Date.now() + 86400000).toISOString().split('T')[0], high: 23, low: 16, condition: 'Cloudy', icon: '☁', precipitation: 2 },
-        { date: new Date(Date.now() + 172800000).toISOString().split('T')[0], high: 20, low: 14, condition: 'Rain', icon: '🌧', precipitation: 5 },
-        { date: new Date(Date.now() + 259200000).toISOString().split('T')[0], high: 22, low: 15, condition: 'Partly cloudy', icon: '⛅', precipitation: 0 },
-        { date: new Date(Date.now() + 345600000).toISOString().split('T')[0], high: 24, low: 17, condition: 'Sunny', icon: '☀', precipitation: 0 },
-      ],
-      lastUpdated: new Date().toISOString(),
-    };
-
     const result: ApiResponse<WeatherData> = {
-      data: mockWeatherData,
-      error: null,
+      data: null,
+      error: 'Unable to fetch weather data. Please try again later.',
       timestamp: new Date().toISOString(),
     };
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, { status: 500 });
   }
 }

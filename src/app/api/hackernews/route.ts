@@ -54,21 +54,12 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('HackerNews API error:', error);
 
-    // Mock data for development
-    const mockData: HackerNewsItem[] = [
-      { id: 1, title: 'Show HN: A new way to build web applications', url: 'https://example.com', score: 256, by: 'developer', time: Date.now() / 1000, descendants: 89, type: 'story' },
-      { id: 2, title: 'The future of programming languages', url: 'https://example.com', score: 189, by: 'researcher', time: Date.now() / 1000, descendants: 134, type: 'story' },
-      { id: 3, title: 'How we scaled our infrastructure to handle 1M requests/sec', url: 'https://example.com', score: 312, by: 'engineer', time: Date.now() / 1000, descendants: 201, type: 'story' },
-      { id: 4, title: 'Ask HN: What are you working on?', url: 'https://news.ycombinator.com/item?id=4', score: 145, by: 'curious', time: Date.now() / 1000, descendants: 267, type: 'story' },
-      { id: 5, title: 'Open source project reaches 100k stars', url: 'https://example.com', score: 423, by: 'maintainer', time: Date.now() / 1000, descendants: 156, type: 'story' },
-    ];
-
     const result: ApiResponse<HackerNewsItem[]> = {
-      data: mockData,
-      error: 'Using mock data',
+      data: null,
+      error: 'Unable to fetch HackerNews data. Please try again later.',
       timestamp: new Date().toISOString(),
     };
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, { status: 500 });
   }
 }
