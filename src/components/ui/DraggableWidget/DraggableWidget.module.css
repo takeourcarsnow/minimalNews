@@ -6,8 +6,7 @@
 }
 
 .draggable:hover .dragHandle {
-  opacity: 1;
-  /* Allow pointer events only when the handle is visible to avoid blocking underlying controls */
+  /* Keep handle interactive for dragging while remaining visually hidden */
   pointer-events: auto;
 }
 
@@ -21,7 +20,13 @@
   cursor: grab;
   z-index: 10;
   pointer-events: none;
-}
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+} 
 
 .dragHandle {
   position: absolute;
@@ -36,15 +41,21 @@
 .dragHandle:active {
   cursor: grabbing;
 }
+.dragHandle:focus-visible {
+  outline: 2px solid rgba(255,255,255,0.12);
+  outline-offset: 2px;
+  opacity: 0; /* keep icon hidden even when focused */
+  pointer-events: auto;
+}
 
 .dragIcon {
-  display: block;
+  display: none; /* visually hidden but handle remains interactive */
   color: var(--color-muted);
   font-size: 12px;
   line-height: 1;
   transform: rotate(90deg);
   user-select: none;
-}
+} 
 
 .content {
   width: 100%;

@@ -41,26 +41,27 @@ const AVAILABLE_WIDGETS: WidgetConfig[] = [
 ];
 
 export function WidgetProvider({ children }: { children: ReactNode }) {
-  // Initialize with default widgets on first render to ensure server/client match.
-  const [widgets, setWidgets] = useState<WidgetConfig[]>(DEFAULT_WIDGETS);
+  // Initialize widgets from localStorage if available to preserve enabled/disabled state across refreshes.
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // After mount, hydrate from localStorage if present (client-only) to avoid SSR/CSR divergence
-  useEffect(() => {
+  const getInitialWidgets = () => {
     try {
-      if (typeof window === 'undefined') return;
+      if (typeof window === 'undefined') return DEFAULT_WIDGETS;
       const raw = localStorage.getItem('enabledWidgets');
       if (raw) {
         const ids: string[] = JSON.parse(raw);
         const initial = ids
           .map(id => AVAILABLE_WIDGETS.find(w => w.id === id))
           .filter(Boolean) as WidgetConfig[];
-        setWidgets(initial);
+        if (initial.length) return initial;
       }
     } catch (err) {
       // ignore
     }
-  }, []);
+    return DEFAULT_WIDGETS;
+  };
+
+  const [widgets, setWidgets] = useState<WidgetConfig[]>(getInitialWidgets);
 
   useEffect(() => {
     try {
