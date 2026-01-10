@@ -20,7 +20,8 @@ export async function GET(request: Request) {
     });
 
     if (!response.ok) {
-      throw new Error('Reddit API unavailable');
+      const body = await response.text().catch(() => '<unreadable body>');
+      throw new Error(`Reddit API unavailable: ${response.status} ${response.statusText} - ${body}`);
     }
 
     const data = await response.json();

@@ -30,31 +30,39 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   let location = searchParams.get('location');
 
-  if (!location) {
-    // Try IP-based geolocation as fallback
-    const forwarded = request.headers.get('x-forwarded-for');
-    const realIp = request.headers.get('x-real-ip');
-    const ip = forwarded ? forwarded.split(',')[0] : realIp || '127.0.0.1';
-
-    try {
-      const ipRes = await fetch(`https://ipapi.co/${ip}/json/`);
-      if (ipRes.ok) {
-        const ipData = await ipRes.json();
-        if (ipData.city && ipData.region) {
-          location = `${ipData.city}, ${ipData.region}`;
-        }
-      }
-    } catch (e) {
-      console.warn('IP geolocation failed:', e);
-    }
-  }
-
-  if (!location) {
-    throw new Error('Unable to determine location');
-  }
-
   try {
-    let lat: number, lon: number, locationName: string;
+    if (!location) {
+      // Try IP-based geolocation as fallback
+      const forwarded = request.headers.get('x-forwarded-for');
+      const realIp = request.headers.get('x-real-ip');
+      const ip = forwarded ? forwarded.split(',')[0] : realIp || '127.0.0.1';
+
+      try {
+        const ipRes = await fetch(`https://ipapi.co/${ip}/json/`);
+        if (ipRes.ok) {
+          const ipData = await ipRes.json();
+          if (ipData.city && ipData.region) {
+            location = `${ipData.city}, ${ipData.region}`;
+          }
+        } else {
+          console.warn('IP geolocation returned non-ok status:', ipRes.status, await ipRes.text().catch(()=>'<no body>'));
+        }
+      } catch (e) {
+        console.warn('IP geolocation failed:', e);
+      }
+    }
+
+    if (!location) {
+      // Return a clean 400 error instead of throwing to avoid crashing the route
+      const errResult: ApiResponse<WeatherData> = {
+        data: null,
+        error: 'Unable to determine location. Please provide a location or allow location access in your browser.',
+        timestamp: new Date().toISOString(),
+      };
+      return NextResponse.json(errResult, { status: 400 });
+    }
+
+    let lat: number | null = null, lon: number | null = null, locationName = '';
 
     // Check if location is coordinates (lat,lon format)
     const coordMatch = location.match(/^(-?\d+\.?\d*),(-?\d+\.?\d*)$/);
@@ -63,20 +71,42 @@ export async function GET(request: Request) {
       lon = parseFloat(coordMatch[2]);
       locationName = location;
     } else {
-      // Use Nominatim to get coordinates for the location name
-      const geocodeResponse = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1`
-      );
-      if (!geocodeResponse.ok) {
-        throw new Error('Geocoding service unavailable');
+      // Prefer Open-Meteo's geocoding API first (more permissive for server-side use)
+      const omUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1`;
+      try {
+        const omRes = await fetch(omUrl);
+        if (omRes.ok) {
+          const omData = await omRes.json();
+          if (omData && omData.results && omData.results.length > 0) {
+            lat = parseFloat(omData.results[0].latitude);
+            lon = parseFloat(omData.results[0].longitude);
+            locationName = omData.results[0].name || omData.results[0].admin1 || location;
+          }
+        } else {
+          console.warn('Open-Meteo geocoding returned non-ok:', omRes.status, await omRes.text().catch(()=>'<no body>'));
+        }
+      } catch (e) {
+        console.warn('Open-Meteo geocoding failed:', e);
       }
-      const geocodeData = await geocodeResponse.json();
-      if (!geocodeData || geocodeData.length === 0) {
-        throw new Error('Location not found');
+
+      // If Open-Meteo didn't yield results, fall back to Nominatim
+      if (lat == null || lon == null) {
+        const geocodeResponse = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1`,
+          { headers: { 'User-Agent': 'minimalNews/1.0 (contact@example.com)' } }
+        );
+        if (!geocodeResponse.ok) {
+          const body = await geocodeResponse.text().catch(() => '<unreadable body>');
+          throw new Error(`Geocoding service unavailable: ${geocodeResponse.status} ${geocodeResponse.statusText} - ${body}`);
+        }
+        const geocodeData = await geocodeResponse.json();
+        if (!geocodeData || geocodeData.length === 0) {
+          throw new Error('Location not found');
+        }
+        lat = parseFloat(geocodeData[0].lat);
+        lon = parseFloat(geocodeData[0].lon);
+        locationName = geocodeData[0].display_name.split(',')[0]; // Get city name
       }
-      lat = parseFloat(geocodeData[0].lat);
-      lon = parseFloat(geocodeData[0].lon);
-      locationName = geocodeData[0].display_name.split(',')[0]; // Get city name
     }
 
     // Use Open-Meteo API (free, no API key required)
@@ -84,7 +114,8 @@ export async function GET(request: Request) {
     const response = await fetch(weatherUrl);
 
     if (!response.ok) {
-      throw new Error('Weather service unavailable');
+      const body = await response.text().catch(() => '<unreadable body>');
+      throw new Error(`Weather service unavailable: ${response.status} ${response.statusText} - ${body}`);
     }
 
     const data = await response.json();
