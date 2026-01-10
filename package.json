@@ -15,7 +15,8 @@
     "cheerio": "^1.1.2",
     "next": "^14.2.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "yahoo-finance2": "^3.11.2"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

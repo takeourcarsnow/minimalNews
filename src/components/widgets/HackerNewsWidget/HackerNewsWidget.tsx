@@ -37,7 +37,7 @@ function getDomain(url: string): string {
 export default function HackerNewsWidget() {
   const [storyType, setStoryType] = useState('top');
   const { data: stories, loading, error } = useWidgetData<HackerNewsItem[]>(
-    `/api/hackernews?type=${storyType}&limit=15`,
+    `/api/hackernews?type=${storyType}&limit=10`,
     [storyType]
   );
 

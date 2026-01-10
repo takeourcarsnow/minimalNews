@@ -6,6 +6,23 @@
   color: var(--primary);
   font-family: var(--font-mono);
   margin-bottom: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+}
+
+.button {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  padding: 0.1rem 0.3rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  cursor: pointer;
+  margin-left: 0.5rem;
+}
+
+.button:hover {
+  background: var(--color-accent);
 }
 
 .list {
@@ -14,20 +31,53 @@
   gap: var(--spacing-xs);
 }
 
-.row {
+.controls {
   display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
+}
+
+.addRow {
+  display: flex;
+  gap: var(--spacing-xs);
+  align-items: center;
+}
+
+.input {
+  padding: 0.2rem 0.4rem;
+  font-family: var(--font-mono);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.periods {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.periodLabel {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+/* Row layout changed to grid for consistent alignment */
+.row {
+  display: grid;
+  grid-template-columns: 70px 1fr auto auto 30px; /* symbol | price | main change | extra changes | remove */
   gap: var(--spacing-md);
   align-items: center;
 }
 
 .symbol {
-  width: 50px;
+  width: 70px;
   font-weight: bold;
   color: var(--accent);
 }
 
 .price {
-  flex: 1;
   color: var(--fg);
 }
 
@@ -36,4 +86,70 @@
 }
 .changeDown {
   color: #ff7b7b;
+}
+
+.extraChanges {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  align-items: flex-end;
+}
+
+.changeUpSmall {
+  color: #7ee787;
+  font-size: 0.85rem;
+}
+.changeDownSmall {
+  color: #ff7b7b;
+  font-size: 0.85rem;
+}
+
+.remove {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text);
+  font-size: 1.1rem;
+  padding: 0 0.4rem;
+}
+
+.button[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.helperText {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-left: 0.5rem;
+}
+
+.notice {
+  font-size: 0.8rem;
+  color: var(--primary);
+  margin-left: 0.75rem;
+  font-family: var(--font-mono);
+}
+
+.extraChanges {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-right: 0.5rem;
+  min-width: 4.5rem;
+  align-items: flex-end;
+}
+
+.changeUpSmall {
+  color: #7ee787;
+  font-size: 0.85rem;
+}
+.changeDownSmall {
+  color: #ff7b7b;
+  font-size: 0.85rem;
+}
+
+.button[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

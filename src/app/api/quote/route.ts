@@ -3,24 +3,20 @@ import type { QuoteOfTheDay, ApiResponse } from '@/types/api';
 
 export async function GET() {
   try {
-    // Use ZenQuotes API for dynamic quotes
-    const response = await fetch('https://zenquotes.io/api/random', {
-      headers: {
-        'User-Agent': 'Terminal-Detox-App/1.0',
-      },
-    });
+    // Use Type.fit API for quotes
+    const response = await fetch('https://type.fit/api/quotes');
 
     if (!response.ok) {
       throw new Error('Quote service unavailable');
     }
 
     const quotes = await response.json();
-    const quote = quotes[0];
+    const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
 
     const result: ApiResponse<QuoteOfTheDay> = {
       data: {
-        text: quote.q,
-        author: quote.a,
+        text: randomQuote.text,
+        author: randomQuote.author,
       },
       error: null,
       timestamp: new Date().toISOString(),

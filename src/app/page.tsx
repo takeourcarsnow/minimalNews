@@ -27,6 +27,8 @@ import TrendingWidget from '@/components/widgets/TrendingWidget';
 import QuoteWidget from '@/components/widgets/QuoteWidget';
 import CryptoWidget from '@/components/widgets/CryptoWidget/CryptoWidget';
 import WorldClocksWidget from '@/components/widgets/WorldClocksWidget/WorldClocksWidget';
+import TodoWidget from '@/components/widgets/TodoWidget';
+import SystemInfoWidget from '@/components/widgets/SystemInfoWidget';
 import DraggableWidget from '@/components/ui/DraggableWidget';
 import CommandLine from '@/components/ui/CommandLine';
 import { useWidgets } from '@/context/WidgetContext';
@@ -42,6 +44,8 @@ const WIDGET_COMPONENTS = {
   QuoteWidget,
   CryptoWidget,
   WorldClocksWidget,
+  TodoWidget,
+  SystemInfoWidget,
 };
 
 export default function Home() {

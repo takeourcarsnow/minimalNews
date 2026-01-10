@@ -2,7 +2,7 @@
 
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import styles from './DraggableWidget.module.css';
 
 interface DraggableWidgetProps {
@@ -11,6 +11,12 @@ interface DraggableWidgetProps {
 }
 
 export default function DraggableWidget({ id, children }: DraggableWidgetProps) {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const {
     attributes,
     listeners,
@@ -20,21 +26,23 @@ export default function DraggableWidget({ id, children }: DraggableWidgetProps) 
     isDragging,
   } = useSortable({ id });
 
-  const style = {
+  const style = isClient ? {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-  };
+  } : {};
+
+  const attributesProps = isClient ? attributes : {};
+  const listenersProps = isClient ? listeners : {};
 
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={styles.draggable}
-      suppressHydrationWarning={true}
-      {...attributes} // keep accessibility attributes on the item
+      {...attributesProps}
     >
-      <div className={styles.dragHandle} {...listeners} tabIndex={0} aria-label="Drag widget">
+      <div className={styles.dragHandle} {...listenersProps} tabIndex={0} aria-label="Drag widget">
         <span className={styles.dragIcon}>⋮⋮</span>
       </div>
       <div className={styles.content}>

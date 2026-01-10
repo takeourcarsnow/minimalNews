@@ -1,0 +1,33 @@
+.container {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.ascii {
+  font-family: var(--font-mono);
+  color: var(--color-green);
+  white-space: pre;
+  line-height: 1.2;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+}
+
+.infoLine {
+  display: flex;
+}
+
+.label {
+  color: var(--color-blue);
+  min-width: 120px;
+}
+
+.value {
+  color: var(--color-text);
+}

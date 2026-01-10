@@ -35,28 +35,31 @@ const AVAILABLE_WIDGETS: WidgetConfig[] = [
   ...DEFAULT_WIDGETS,
   { id: 'crypto', component: 'CryptoWidget' },
   { id: 'clocks', component: 'WorldClocksWidget' },
+  { id: 'todo', component: 'TodoWidget' },
+  { id: 'systeminfo', component: 'SystemInfoWidget' },
 ];
 
 export function WidgetProvider({ children }: { children: ReactNode }) {
-  // Load enabled widgets from localStorage (persisted by id)
-  const loadInitialWidgets = () => {
+  // Initialize with default widgets on first render to ensure server/client match.
+  const [widgets, setWidgets] = useState<WidgetConfig[]>(DEFAULT_WIDGETS);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // After mount, hydrate from localStorage if present (client-only) to avoid SSR/CSR divergence
+  useEffect(() => {
     try {
-      const raw = typeof window !== 'undefined' ? localStorage.getItem('enabledWidgets') : null;
+      if (typeof window === 'undefined') return;
+      const raw = localStorage.getItem('enabledWidgets');
       if (raw) {
         const ids: string[] = JSON.parse(raw);
-        // Map ids to available widget configs (preserve any saved props if needed)
-        return ids
+        const initial = ids
           .map(id => AVAILABLE_WIDGETS.find(w => w.id === id))
           .filter(Boolean) as WidgetConfig[];
+        setWidgets(initial);
       }
     } catch (err) {
-      // ignore and fallback
+      // ignore
     }
-    return DEFAULT_WIDGETS;
-  };
-
-  const [widgets, setWidgets] = useState<WidgetConfig[]>(loadInitialWidgets);
-  const [refreshKey, setRefreshKey] = useState(0);
+  }, []);
 
   useEffect(() => {
     try {

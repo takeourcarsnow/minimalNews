@@ -19,7 +19,7 @@ async function fetchGitHubTrending(): Promise<SocialTrending['github']> {
     const repos: SocialTrending['github'] = [];
 
     $('article.Box-row').each((index, element) => {
-      if (index >= 5) return false; // Limit to 5 repos
+      if (index >= 10) return false; // Limit to 10 repos
 
       const $article = $(element);
       const title = $article.find('h2 a').text().trim().replace(/\s+/g, ' ');
@@ -47,7 +47,7 @@ async function fetchGitHubTrending(): Promise<SocialTrending['github']> {
 
 async function fetchTwitterTrending(): Promise<SocialTrending['twitter']> {
   try {
-    const response = await fetch('https://getdaytrends.com/', {
+    const response = await fetch('https://trends24.in/united-states/', {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -67,58 +67,23 @@ async function fetchTwitterTrending(): Promise<SocialTrending['twitter']> {
     const $ = cheerio.load(html);
     const trends: SocialTrending['twitter'] = [];
 
-    $('li').each((index, element) => {
-      if (index >= 5) return false;
+    $('ol li a').each((index, element) => {
+      if (index >= 10) return false;
 
-      const $li = $(element);
-      const fullText = $li.text().trim();
+      const $a = $(element);
+      const text = $a.text().trim();
+      const trendName = text ? '#' + text : '';
 
-      // Extract hashtag from the text
-      const hashtagMatch = fullText.match(/#([^\sUnder]+)/);
-      let trendName = '';
-      let volume = 0;
-
-      if (hashtagMatch) {
-        trendName = '#' + hashtagMatch[1];
-      }
-
-      // Extract volume
-      const volumeMatch = fullText.match(/(\d+(?:\.\d+)?)(K|M)? tweets/);
-      if (volumeMatch) {
-        volume = parseFloat(volumeMatch[1]);
-        if (volumeMatch[2] === 'K') volume *= 1000;
-        if (volumeMatch[2] === 'M') volume *= 1000000;
-      }
-
-      if (trendName && trendName.length > 1 && trendName !== '#Trending' && trendName !== '#Top' && trendName !== '#Help') {
+      if (trendName && trendName.length > 1) {
         trends.push({
           id: trendName,
           name: trendName,
           category: 'Trending',
-          volume: Math.floor(volume),
+          volume: 0, // Volume not easily available on this site
           url: `https://twitter.com/search?q=${encodeURIComponent(trendName)}`,
         });
       }
     });
-
-    if (trends.length === 0) {
-      // Fallback: try to extract hashtags from the entire text
-      const textContent = $.text();
-      const hashtagRegex = /#([^\s\n]+)/g;
-      let match;
-      while ((match = hashtagRegex.exec(textContent)) && trends.length < 5) {
-        const trendName = '#' + match[1];
-        if (trendName.length > 2 && !trends.find(t => t.name === trendName)) {
-          trends.push({
-            id: trendName,
-            name: trendName,
-            category: 'Trending',
-            volume: 0,
-            url: `https://twitter.com/search?q=${encodeURIComponent(trendName)}`,
-          });
-        }
-      }
-    }
 
     return trends;
   } catch (error) {

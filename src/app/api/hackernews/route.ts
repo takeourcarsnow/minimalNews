@@ -4,7 +4,7 @@ import type { HackerNewsItem, ApiResponse } from '@/types/api';
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const type = searchParams.get('type') || 'top'; // top, new, best, ask, show
-  const limit = Math.min(parseInt(searchParams.get('limit') || '15'), 30);
+  const limit = Math.min(parseInt(searchParams.get('limit') || '10'), 30);
 
   try {
     // Fetch story IDs from HackerNews API
